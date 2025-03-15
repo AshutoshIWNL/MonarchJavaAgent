@@ -1,6 +1,6 @@
 ---
 title: Monarch Java Agent
-layout: default
+theme: null
 ---
 
 <link rel="stylesheet" type="text/css" href="style.css">
