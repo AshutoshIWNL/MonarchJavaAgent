@@ -1,52 +1,54 @@
-/* Import Stylish Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;700&family=Poppins:wght@300;400;700&display=swap');
-
 /* General Styling */
+@import url('https://fonts.googleapis.com/css2?family=Bebas Neue:wght@300;400;600&display=swap');
+
 body {
-    font-family: 'Exo 2', 'Poppins', sans-serif;
-    background: linear-gradient(135deg, #1a002b, #3b007a);
+    font-family: 'Bebas Neue', sans-serif;
+    background: linear-gradient(135deg, #2a0d45, #4c1d95);
     color: #eee;
     margin: 0;
     padding: 0;
-    line-height: 1.7;
+    line-height: 1.6;
     text-align: center;
 }
 
 /* Header Styling */
 h1 {
     font-size: 3rem;
-    text-shadow: 0px 0px 15px rgba(192, 132, 252, 0.8);
     color: #c084fc;
-    margin-top: 30px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
+    text-shadow: 3px 3px 15px #7b2cbf;
+    margin-top: 20px;
+    font-weight: 600;
 }
 
 h2 {
     font-size: 2.2rem;
     color: #a855f7;
-    border-bottom: 3px solid #7e22ce;
+    border-bottom: 2px solid #9f7aea;
     padding-bottom: 8px;
     display: inline-block;
 }
 
-/* Glowing Horizontal Line */
+h3 {
+    color: #c084fc;
+}
+
+/* Horizontal Rule Styling */
 hr {
     border: none;
     height: 2px;
-    background: linear-gradient(90deg, #c084fc, #7e22ce);
-    box-shadow: 0px 0px 12px rgba(192, 132, 252, 0.6);
-    width: 60%;
+    background: linear-gradient(90deg, rgba(144,104,255,0) 0%, #9245f5 50%, rgba(144,104,255,0) 100%);
     margin: 20px auto;
+    width: 60%;
 }
 
 /* Shadow-Themed Quotes */
 blockquote {
     font-style: italic;
     color: #ff79c6;
-    border-left: 4px solid #a855f7;
-    padding-left: 15px;
-    font-size: 1.2rem;
+    border-left: 4px solid #9245f5;
+    padding-left: 10px;
+    margin: 20px auto;
+    max-width: 70%;
 }
 
 /* Key Abilities Section */
@@ -56,33 +58,45 @@ ul {
 }
 
 ul li {
-    background: rgba(144, 104, 255, 0.15);
+    background: rgba(144, 104, 255, 0.2);
     padding: 12px;
-    margin: 6px 0;
-    border-radius: 8px;
-    box-shadow: 0 0 15px rgba(144, 104, 255, 0.5);
-    font-size: 1.1rem;
+    margin: 5px auto;
+    border-radius: 6px;
+    box-shadow: 0 0 12px rgba(144, 104, 255, 0.6);
+    width: 60%;
 }
 
-/* Code Blocks */
-pre {
-    background-color: #222;
-    padding: 15px;
-    border-radius: 8px;
-    overflow-x: auto;
-    font-size: 0.9rem;
+/* Ordered List Styling */
+ol {
+    list-style-type: decimal;
+    text-align: left;
+    width: fit-content;
+    margin: auto;
+    padding-left: 20px;
 }
 
-code {
-    font-family: 'Courier New', monospace;
-    color: #50fa7b;
+/* Centering Sections */
+.section {
+    text-align: center;
+    margin: 30px auto;
+    max-width: 80%;
 }
 
-/* Tables */
+/* Ensure specific sections are centered */
+#monargs, #runtime, #startup {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Ensure tables don't break alignment */
 table {
-    width: 100%;
+    width: 80%;
+    margin: auto;
     border-collapse: collapse;
-    margin-top: 10px;
+    border-radius: 6px;
+    overflow: hidden;
 }
 
 th, td {
@@ -92,21 +106,33 @@ th, td {
 }
 
 th {
-    background-color: #292929;
+    background-color: #3b0764;
     color: #c084fc;
+}
+
+/* Code Blocks */
+pre {
+    background-color: #222;
+    padding: 15px;
+    border-radius: 5px;
+    overflow-x: auto;
+}
+
+code {
+    font-family: 'Courier New', monospace;
+    color: #50fa7b;
 }
 
 /* Links */
 a {
     color: #8be9fd;
     text-decoration: none;
-    font-weight: bold;
-    transition: 0.3s ease;
+    transition: all 0.3s ease-in-out;
 }
 
 a:hover {
     text-decoration: underline;
-    color: #50fa7b;
+    color: #ff79c6;
 }
 
 /* Footer */

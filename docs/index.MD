@@ -1,13 +1,13 @@
 ---
-title: MonarchJavaAgent
+title: Monarch Java Agent
 layout: default
 ---
 
 <link rel="stylesheet" type="text/css" href="style.css">
 
-# MonarchJavaAgent
+# Monarch Java Agent
 
-MonarchJavaAgent is a powerful Java agent for method monitoring and analysis. It offers various features to track method execution time, print stack traces, log method arguments and return values, capture heap dumps, and gather JVM-related information.
+Monarch is a powerful Java agent for method monitoring and analysis. It offers various features to track method execution time, print stack traces, log method arguments and return values, capture heap dumps, and gather JVM-related information.
 
 "Arise, shadows of execution!"
 
