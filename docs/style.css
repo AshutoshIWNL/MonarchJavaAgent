@@ -92,3 +92,22 @@ footer {
     margin-top: 50px;
     border-top: 1px solid rgba(144, 104, 255, 0.3);
 }
+
+/* Fix for Bash code blocks */
+pre, code {
+    background-color: #171123 !important;  /* Dark background */
+    color: #50fa7b !important; /* Green text */
+    padding: 15px;
+    border-radius: 8px;
+    overflow-x: auto;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    border-left: 4px solid #7b2cbf;
+}
+
+/* Ensure inline code inside text is also visible */
+code {
+    background-color: rgba(23, 17, 35, 0.9) !important;
+    color: #50fa7b !important;
+    padding: 3px 6px;
+    border-radius: 4px;
+}
