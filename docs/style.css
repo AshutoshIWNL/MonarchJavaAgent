@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@300;400;600&display=swap');
 
 body {
-    font-family: 'Oswald', sans-serif !important;
+    font-family: 'Oswald', sans-serif;
     background: linear-gradient(135deg, #0a0215, #1a0632);
     color: #eee;
     margin: 0;
@@ -21,7 +21,7 @@ body {
 
 /* Header Styling */
 h1 {
-    font-family: 'Bebas Neue', sans-serif !important;
+    font-family: 'Bebas Neue', cursive, sans-serif;
     font-size: 4rem;
     color: #c084fc;
     text-shadow: 0 0 10px #9245f5, 0 0 20px #7b2cbf;
@@ -31,7 +31,7 @@ h1 {
 }
 
 h2 {
-    font-family: 'Bebas Neue', sans-serif !important;
+    font-family: 'Bebas Neue', cursive, sans-serif;
     font-size: 2.5rem;
     color: #a855f7;
     border-bottom: 2px solid #9f7aea;
@@ -41,46 +41,67 @@ h2 {
 }
 
 h3 {
-    font-family: 'Bebas Neue', sans-serif !important;
+    font-family: 'Bebas Neue', cursive, sans-serif;
     color: #c084fc;
     font-size: 1.8rem;
     margin-top: 30px;
     text-align: left;
 }
 
-/* Tables */
+/* Table Styling - Consolidated */
 table {
-    width: 80%; /* Adjust width as needed */
-    margin: 30px auto;
+    width: 100%;
     border-collapse: collapse;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 0 20px rgba(144, 104, 255, 0.4);
-}
-
-th, td {
-    border: 1px solid #301b63;
-    padding: 12px 15px;
+    margin: 20px 0;
+    font-size: 16px;
     text-align: left;
+    background-color: #1e1e2e;
+    color: #ffffff;
+    border: 1px solid #7b2cbf;
 }
 
 th {
-    background-color: #2d1357;
-    color: #c084fc;
-    font-family: 'Bebas Neue', sans-serif;
+    background-color: #7b2cbf;
+    color: #ffffff;
+    padding: 12px 15px;
+    font-family: 'Bebas Neue', cursive, sans-serif;
     font-size: 1.2rem;
     letter-spacing: 1px;
+    text-align: left;
 }
 
-/* Centering the .monargs Table */
+td {
+    padding: 12px 15px;
+    border: 1px solid #301b63;
+    text-align: left;
+}
+
+/* Alternate row shading for better readability */
+tr:nth-child(even) {
+    background-color: #282a36;
+}
+
+/* Special Table Styling - .monargs */
 .monargs {
-    width: 70%;  /* Adjust width as needed */
-    margin: 30px auto; /* Centers the table */
-    text-align: center; /* Centers text inside cells */
+    width: 90%;
+    margin: 30px auto;
 }
 
-.monargs th, .monargs td {
+.monargs th,
+.monargs td {
     text-align: center;
+}
+
+/* Responsive adjustment for tables */
+@media (max-width: 768px) {
+    table, .monargs {
+        width: 100%;
+        font-size: 14px;
+    }
+
+    th, td {
+        padding: 8px 10px;
+    }
 }
 
 /* Footer */
@@ -93,52 +114,52 @@ footer {
     border-top: 1px solid rgba(144, 104, 255, 0.3);
 }
 
-/* Fix for Bash code blocks */
-pre, code {
-    background-color: #171123 !important;  /* Dark background */
-    color: #50fa7b !important; /* Green text */
+/* Code Block Styling */
+pre {
+    background-color: #171123;
+    color: #50fa7b;
     padding: 15px;
     border-radius: 8px;
     overflow-x: auto;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
     border-left: 4px solid #7b2cbf;
+    margin: 20px 0;
 }
 
-/* Ensure inline code inside text is also visible */
 code {
-    background-color: rgba(23, 17, 35, 0.9) !important;
-    color: #50fa7b !important;
+    background-color: rgba(23, 17, 35, 0.9);
+    color: #50fa7b;
     padding: 3px 6px;
     border-radius: 4px;
+    font-family: monospace;
 }
 
-/* Fix table text visibility */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 20px 0;
-    font-size: 16px;
-    text-align: left;
-    background-color: #1e1e2e; /* Dark background */
-    color: #ffffff !important; /* White text */
-    border: 1px solid #7b2cbf;
+/* Fix for Jekyll-specific issues */
+.highlight pre,
+.highlight code {
+    background-color: #171123;
+    color: #50fa7b;
 }
 
-/* Table header styling */
-th {
-    background-color: #7b2cbf; /* Purple header */
-    color: #ffffff !important;
-    padding: 12px;
+/* Ensure content is visible on GitHub Pages */
+.page-content {
+    color: #eee;
 }
 
-/* Table row styling */
-td {
-    padding: 12px;
-    border: 1px solid #7b2cbf;
+/* Fix for potential theme conflicts */
+.theme-content h1,
+.theme-content h2,
+.theme-content h3 {
+    color: #c084fc;
 }
 
-/* Alternate row shading for better readability */
-tr:nth-child(even) {
-    background-color: #282a36;
+/* Ensure Jekyll markdown content is properly styled */
+.markdown-content table {
+    color: #ffffff;
 }
 
+.markdown-content pre,
+.markdown-content code {
+    background-color: #171123;
+    color: #50fa7b;
+}
