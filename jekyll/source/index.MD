@@ -2,9 +2,10 @@
 title: Monarch Java Agent
 theme: null
 ---
-# Monarch Java Agent
-
+[![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/AshutoshIWNL/MonarchJavaAgent)
+<link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="stylesheet" type="text/css" href="style.css">
+# Monarch Java Agent
 
 Monarch is a powerful Java agent for method monitoring and analysis. It offers various features to track method execution time, print stack traces, log method arguments and return values, capture heap dumps, and gather JVM-related information.
 
