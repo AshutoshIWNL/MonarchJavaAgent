@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@300;400;600&display=swap');
 
 body {
-    font-family: 'Oswald', sans-serif;
+    font-family: 'Oswald', sans-serif !important;
     background: linear-gradient(135deg, #0a0215, #1a0632);
     color: #eee;
     margin: 0;
@@ -21,7 +21,7 @@ body {
 
 /* Header Styling */
 h1 {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: 'Bebas Neue', sans-serif !important;
     font-size: 4rem;
     color: #c084fc;
     text-shadow: 0 0 10px #9245f5, 0 0 20px #7b2cbf;
@@ -31,7 +31,7 @@ h1 {
 }
 
 h2 {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: 'Bebas Neue', sans-serif !important;
     font-size: 2.5rem;
     color: #a855f7;
     border-bottom: 2px solid #9f7aea;
@@ -41,78 +41,16 @@ h2 {
 }
 
 h3 {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: 'Bebas Neue', sans-serif !important;
     color: #c084fc;
     font-size: 1.8rem;
     margin-top: 30px;
     text-align: left;
 }
 
-/* Horizontal Rule Styling */
-hr {
-    border: none;
-    height: 2px;
-    background: linear-gradient(90deg, rgba(144,104,255,0) 0%, #9245f5 50%, rgba(144,104,255,0) 100%);
-    margin: 30px auto;
-    width: 80%;
-}
-
-/* Shadow-Themed Quotes */
-blockquote {
-    font-style: italic;
-    color: #ff79c6;
-    border-left: 4px solid #9245f5;
-    padding: 15px 20px;
-    margin: 30px 0;
-    background-color: rgba(41, 10, 89, 0.3);
-    box-shadow: 0 0 15px rgba(144, 104, 255, 0.2);
-    border-radius: 0 8px 8px 0;
-    font-size: 1.2rem;
-}
-
-/* Key Abilities Section */
-ul {
-    list-style-type: none;
-    padding: 0;
-    margin: 20px 0;
-}
-
-ul li {
-    background: rgba(41, 10, 89, 0.4);
-    padding: 15px 20px;
-    margin: 10px 0;
-    border-radius: 6px;
-    box-shadow: 0 0 12px rgba(144, 104, 255, 0.4);
-    text-align: left;
-    transition: all 0.3s ease;
-    border-left: 4px solid #7b2cbf;
-}
-
-ul li:hover {
-    background: rgba(58, 14, 123, 0.5);
-    transform: translateX(5px);
-    box-shadow: 0 0 15px rgba(144, 104, 255, 0.7);
-}
-
-ul li strong {
-    color: #a855f7;
-}
-
-/* Ordered List Styling */
-ol {
-    list-style-type: decimal;
-    text-align: left;
-    padding-left: 30px;
-    margin: 20px 0;
-}
-
-ol li {
-    padding: 8px 0;
-}
-
 /* Tables */
 table {
-    width: 100%;
+    width: 80%; /* Adjust width as needed */
     margin: 30px auto;
     border-collapse: collapse;
     border-radius: 8px;
@@ -134,43 +72,15 @@ th {
     letter-spacing: 1px;
 }
 
-tr {
-    background-color: rgba(41, 10, 89, 0.3);
-    transition: all 0.3s ease;
+/* Centering the .monargs Table */
+.monargs {
+    width: 70%;  /* Adjust width as needed */
+    margin: 30px auto; /* Centers the table */
+    text-align: center; /* Centers text inside cells */
 }
 
-tr:hover {
-    background-color: rgba(58, 14, 123, 0.5);
-}
-
-/* Code Blocks */
-pre {
-    background-color: #171123;
-    padding: 20px;
-    border-radius: 8px;
-    overflow-x: auto;
-    margin: 25px 0;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-    border-left: 4px solid #7b2cbf;
-}
-
-code {
-    font-family: 'Courier New', monospace;
-    color: #50fa7b;
-}
-
-/* Links */
-a {
-    color: #8be9fd;
-    text-decoration: none;
-    transition: all 0.3s ease-in-out;
-    font-weight: 600;
-}
-
-a:hover {
-    text-decoration: underline;
-    color: #ff79c6;
-    text-shadow: 0 0 8px rgba(255, 121, 198, 0.6);
+.monargs th, .monargs td {
+    text-align: center;
 }
 
 /* Footer */
@@ -181,28 +91,4 @@ footer {
     color: #888;
     margin-top: 50px;
     border-top: 1px solid rgba(144, 104, 255, 0.3);
-}
-
-/* Sections alignment fix */
-p, ul, ol, pre, blockquote {
-    text-align: left;
-}
-
-/* Media Queries for Responsiveness */
-@media (max-width: 768px) {
-    body {
-        padding: 15px;
-    }
-
-    h1 {
-        font-size: 3rem;
-    }
-
-    h2 {
-        font-size: 2rem;
-    }
-
-    ul li {
-        padding: 12px 15px;
-    }
 }
