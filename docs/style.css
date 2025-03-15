@@ -111,3 +111,34 @@ code {
     padding: 3px 6px;
     border-radius: 4px;
 }
+
+/* Fix table text visibility */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 16px;
+    text-align: left;
+    background-color: #1e1e2e; /* Dark background */
+    color: #ffffff !important; /* White text */
+    border: 1px solid #7b2cbf;
+}
+
+/* Table header styling */
+th {
+    background-color: #7b2cbf; /* Purple header */
+    color: #ffffff !important;
+    padding: 12px;
+}
+
+/* Table row styling */
+td {
+    padding: 12px;
+    border: 1px solid #7b2cbf;
+}
+
+/* Alternate row shading for better readability */
+tr:nth-child(even) {
+    background-color: #282a36;
+}
+
