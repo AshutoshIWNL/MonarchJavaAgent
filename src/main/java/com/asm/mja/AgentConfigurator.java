@@ -209,7 +209,7 @@ public class AgentConfigurator {
      * @param inst       The instrumentation instance.
      * @param launchType The type of launch: 'javaagent' or 'attachVM'.
      */
-    public static void instrument(String agentArgs, Instrumentation inst, String launchType) {
+    public static void instrument(String agentArgs, Instrumentation inst, String launchType, String agentAbsolutePath) {
         printStartup(agentArgs);
 
         String configFile;
@@ -267,7 +267,7 @@ public class AgentConfigurator {
 
         List<String> rulesString = new ArrayList<>(config.getAgentRules());
         List<Rule> rules = RuleParser.parseRules(rulesString);
-        GlobalTransformer globalTransformer = new GlobalTransformer(config, traceFileLogger, rules);
+        GlobalTransformer globalTransformer = new GlobalTransformer(config, traceFileLogger, rules, launchType, agentAbsolutePath);
 
         AgentLogger.debug("Launch Type \"" + launchType + "\" detected");
 

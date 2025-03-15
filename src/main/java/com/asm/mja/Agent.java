@@ -23,7 +23,7 @@ public class Agent {
      */
     public static void premain(String agentArgs, Instrumentation inst) {
         AgentConfigurator.setupLogger(agentArgs);
-        AgentConfigurator.instrument(agentArgs, inst, JAVA_AGENT_MODE);
+        AgentConfigurator.instrument(agentArgs, inst, JAVA_AGENT_MODE, Agent.class.getProtectionDomain().getCodeSource().getLocation().getPath());
     }
 
     /**
@@ -45,7 +45,7 @@ public class Agent {
             return;
         }
         AgentConfigurator.setupLogger(agentArgs);
-        AgentConfigurator.instrument(agentArgs, inst, ATTACH_VM_MODE);
+        AgentConfigurator.instrument(agentArgs, inst, ATTACH_VM_MODE, agentJar.getAbsolutePath());
     }
 
 }
