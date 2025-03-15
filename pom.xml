@@ -1,0 +1,142 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.asm.mja</groupId>
+  <artifactId>MonarchJavaAgent</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.2.4</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <manifestEntries>
+                    <Built-By>Ashutosh</Built-By>
+                    <Premain-Class>com.asm.mja.Agent</Premain-Class>
+                    <Agent-Class>com.asm.mja.Agent</Agent-Class>
+                    <Can-Retransform-Classes>true</Can-Retransform-Classes>
+                    <Can-Redefine-Classes>true</Can-Redefine-Classes>
+                  </manifestEntries>
+                </transformer>
+              </transformers>
+              <relocations>
+                <relocation>
+                  <pattern>javassist</pattern>
+                  <shadedPattern>com.asm.mja.internal.javassist</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.fasterxml.jackson</pattern>
+                  <shadedPattern>com.asm.mja.internal.jackson</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.apache.commons.cli</pattern>
+                  <shadedPattern>com.asm.mja.internal.commons.cli</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>javax.mail</pattern>
+                  <shadedPattern>com.asm.mja.internal.mail</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.sun.mail</pattern>
+                  <shadedPattern>com.asm.mja.internal.sunmail</shadedPattern>
+                </relocation>
+              </relocations>
+              <filters>
+                <filter>
+                  <artifact>com.fasterxml.jackson.core:jackson-core</artifact>
+                  <excludes>
+                    <exclude>META-INF/versions/**</exclude>
+                    <exclude>META-INF/services/**</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>com.fasterxml.jackson.dataformat:jackson-dataformat</artifact>
+                  <excludes>
+                    <exclude>META-INF/versions/**</exclude>
+                    <exclude>META-INF/services/**</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>8</source>
+          <target>8</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <packaging>jar</packaging>
+
+  <name>MonarchJavaAgent</name>
+  <url>http://maven.apache.org</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.17.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-yaml</artifactId>
+      <version>2.17.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.javassist</groupId>
+      <artifactId>javassist</artifactId>
+      <version>3.29.2-GA</version>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-cli</groupId>
+      <artifactId>commons-cli</artifactId>
+      <version>1.7.0</version>
+    </dependency>
+
+    <!-- for tools.jar : attach -->
+    <dependency>
+      <groupId>com.github.olivergondza</groupId>
+      <artifactId>maven-jdk-tools-wrapper</artifactId>
+      <version>0.1</version>
+      <!-- need the JAR only for compiling, hence marked as "provided" -->
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.mail</groupId>
+      <artifactId>javax.mail-api</artifactId>
+      <version>1.6.2</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.sun.mail</groupId>
+      <artifactId>javax.mail</artifactId>
+      <version>1.6.2</version>
+    </dependency>
+
+  </dependencies>
+
+</project>

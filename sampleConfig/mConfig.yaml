@@ -1,0 +1,27 @@
+shouldInstrument: true
+configRefreshInterval: 15
+traceFileLocation: C:\\TraceFileDumps
+agentRules:
+  - ClassA::methodA@INGRESS::STACK
+  - ClassA::methodA@INGRESS::ARGS
+  - ClassA::methodA@EGRESS::RET
+  - ClassA::methodB@INGRESS::ARGS
+  - ClassA::methodB@INGRESS::STACK
+  - ClassA::methodB@EGRESS::STACK
+  - ClassA::methodB@EGRESS::RET
+  - ClassB::methodC@PROFILE
+  - ClassB::methodC@INGRESS::HEAP
+  - ClassB::methodC@INGRESS::ADD::[System.out.println(20);]
+  - ClassA::methodA@INGRESS::ADD::[System.out.println(this.getClass().getName());]
+  - ClassA::methodA@CODEPOINT(11)::ADD::[System.out.println(499);]
+  - ClassA::methodA@CODEPOINT(11)::ADD::[System.out.println(499 + "," + "Ashutosh Mishra");]
+printClassLoaderTrace: true
+printJVMSystemProperties: true
+printEnvironmentVariables: true
+printJVMHeapUsage: true
+printJVMCpuUsage: true
+maxHeapDumps: 3
+sendAlertEmails: true
+emailRecipientList:
+  - abc@example.com
+  - ashutosh@asm.com
