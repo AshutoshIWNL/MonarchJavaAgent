@@ -4,6 +4,7 @@ layout: default
 ---
 
 <link rel="stylesheet" type="text/css" href="style.css">
+<div class="shadow-aura"></div>
 
 Monarch is a powerful Java agent for method monitoring and analysis. It offers various features to track method execution time, print stack traces, log method arguments and return values, capture heap dumps, and gather JVM-related information.
 
