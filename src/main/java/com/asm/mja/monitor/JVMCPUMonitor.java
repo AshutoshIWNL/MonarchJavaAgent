@@ -81,7 +81,7 @@ public class JVMCPUMonitor implements Runnable {
 
     public void shutdown() {
         if (thread != null) {
-            logger.trace("Shutting down JVM memory monitor");
+            logger.trace("Shutting down JVM CPU monitor");
             thread.interrupt();
             thread = null;
         }
