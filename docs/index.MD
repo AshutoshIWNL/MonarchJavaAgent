@@ -130,10 +130,10 @@ cd MonarchJavaAgent
 mvn clean package
 ```
 
-# The Architect of Shadows
+## The Architect of Shadows
 
 - **Ashutosh Mishra** (https://github.com/AshutoshIWNL)
 
-# The Shadow's Pact
+## The Shadow's Pact
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
