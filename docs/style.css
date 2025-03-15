@@ -1,57 +1,52 @@
-/* General Styling */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@300;400&display=swap');
+/* Import Stylish Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;700&family=Poppins:wght@300;400;700&display=swap');
 
+/* General Styling */
 body {
-    font-family: 'Poppins', sans-serif;
-    background-color: #0a0a0a;
-    color: #ddd;
+    font-family: 'Exo 2', 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #1a002b, #3b007a);
+    color: #eee;
     margin: 0;
     padding: 0;
     line-height: 1.7;
-    transition: background 0.3s ease-in-out;
+    text-align: center;
 }
 
 /* Header Styling */
 h1 {
-    font-family: 'Playfair Display', serif;
     font-size: 3rem;
-    text-align: center;
+    text-shadow: 0px 0px 15px rgba(192, 132, 252, 0.8);
     color: #c084fc;
-    text-shadow: 2px 2px 15px rgba(146, 69, 245, 0.8);
-    letter-spacing: 2px;
     margin-top: 30px;
-    transition: text-shadow 0.3s ease-in-out;
-}
-
-h1:hover {
-    text-shadow: 2px 2px 20px rgba(146, 69, 245, 1);
+    letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
 h2 {
     font-size: 2.2rem;
-    color: #9f7aea;
-    border-bottom: 2px solid rgba(159, 122, 234, 0.7);
-    padding-bottom: 5px;
-    transition: color 0.3s ease-in-out, border-bottom 0.3s ease-in-out;
+    color: #a855f7;
+    border-bottom: 3px solid #7e22ce;
+    padding-bottom: 8px;
+    display: inline-block;
 }
 
-h3 {
-    font-size: 1.5rem;
-    color: #c084fc;
+/* Glowing Horizontal Line */
+hr {
+    border: none;
+    height: 2px;
+    background: linear-gradient(90deg, #c084fc, #7e22ce);
+    box-shadow: 0px 0px 12px rgba(192, 132, 252, 0.6);
+    width: 60%;
+    margin: 20px auto;
 }
 
 /* Shadow-Themed Quotes */
 blockquote {
     font-style: italic;
-    font-size: 1.2rem;
     color: #ff79c6;
-    border-left: 4px solid #9245f5;
+    border-left: 4px solid #a855f7;
     padding-left: 15px;
-    transition: border-left 0.3s ease-in-out;
-}
-
-blockquote:hover {
-    border-left: 4px solid #ff79c6;
+    font-size: 1.2rem;
 }
 
 /* Key Abilities Section */
@@ -64,27 +59,18 @@ ul li {
     background: rgba(144, 104, 255, 0.15);
     padding: 12px;
     margin: 6px 0;
-    border-radius: 7px;
-    box-shadow: 0 0 12px rgba(144, 104, 255, 0.3);
-    transition: box-shadow 0.3s ease-in-out;
-}
-
-ul li:hover {
-    box-shadow: 0 0 18px rgba(144, 104, 255, 0.5);
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(144, 104, 255, 0.5);
+    font-size: 1.1rem;
 }
 
 /* Code Blocks */
 pre {
-    background-color: #181818;
+    background-color: #222;
     padding: 15px;
-    border-radius: 7px;
+    border-radius: 8px;
     overflow-x: auto;
-    border-left: 3px solid #c084fc;
-    transition: border-left 0.3s ease-in-out;
-}
-
-pre:hover {
-    border-left: 3px solid #ff79c6;
+    font-size: 0.9rem;
 }
 
 code {
@@ -96,16 +82,17 @@ code {
 table {
     width: 100%;
     border-collapse: collapse;
+    margin-top: 10px;
 }
 
 th, td {
-    border: 1px solid #333;
+    border: 1px solid #444;
     padding: 10px;
     text-align: left;
 }
 
 th {
-    background-color: #1e1e1e;
+    background-color: #292929;
     color: #c084fc;
 }
 
@@ -113,44 +100,19 @@ th {
 a {
     color: #8be9fd;
     text-decoration: none;
-    position: relative;
-    transition: color 0.3s ease-in-out;
-}
-
-a::before {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 2px;
-    bottom: 0;
-    left: 0;
-    background-color: #8be9fd;
-    visibility: hidden;
-    transform: scaleX(0);
-    transition: all 0.3s ease-in-out;
+    font-weight: bold;
+    transition: 0.3s ease;
 }
 
 a:hover {
+    text-decoration: underline;
     color: #50fa7b;
-}
-
-a:hover::before {
-    visibility: visible;
-    transform: scaleX(1);
 }
 
 /* Footer */
 footer {
     text-align: center;
-    padding: 25px;
+    padding: 20px;
     font-size: 14px;
     color: #888;
-    background: #121212;
-    border-top: 2px solid #9245f5;
-    box-shadow: 0 -5px 10px rgba(146, 69, 245, 0.3);
-    transition: border-top 0.3s ease-in-out;
-}
-
-footer:hover {
-    border-top: 2px solid #ff79c6;
 }
