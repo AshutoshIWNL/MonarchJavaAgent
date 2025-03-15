@@ -1,35 +1,51 @@
 /* General Styling */
-@import url('https://fonts.googleapis.com/css2?family=Bebas Neue:wght@300;400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@300;400;600&display=swap');
 
 body {
-    font-family: 'Bebas Neue', sans-serif;
-    background: linear-gradient(135deg, #2a0d45, #4c1d95);
+    font-family: 'Oswald', sans-serif;
+    background: linear-gradient(135deg, #0a0215, #1a0632);
     color: #eee;
     margin: 0;
-    padding: 0;
+    padding: 30px;
     line-height: 1.6;
-    text-align: center;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: rgba(10, 2, 21, 0.7);
+    border-radius: 10px;
+    box-shadow: 0 0 30px rgba(144, 104, 255, 0.3);
 }
 
 /* Header Styling */
 h1 {
-    font-size: 3rem;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4rem;
     color: #c084fc;
-    text-shadow: 3px 3px 15px #7b2cbf;
+    text-shadow: 0 0 10px #9245f5, 0 0 20px #7b2cbf;
     margin-top: 20px;
-    font-weight: 600;
+    text-align: center;
+    letter-spacing: 2px;
 }
 
 h2 {
-    font-size: 2.2rem;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
     color: #a855f7;
     border-bottom: 2px solid #9f7aea;
     padding-bottom: 8px;
-    display: inline-block;
+    margin-top: 40px;
+    text-align: left;
 }
 
 h3 {
+    font-family: 'Bebas Neue', sans-serif;
     color: #c084fc;
+    font-size: 1.8rem;
+    margin-top: 30px;
+    text-align: left;
 }
 
 /* Horizontal Rule Styling */
@@ -37,8 +53,8 @@ hr {
     border: none;
     height: 2px;
     background: linear-gradient(90deg, rgba(144,104,255,0) 0%, #9245f5 50%, rgba(144,104,255,0) 100%);
-    margin: 20px auto;
-    width: 60%;
+    margin: 30px auto;
+    width: 80%;
 }
 
 /* Shadow-Themed Quotes */
@@ -46,76 +62,96 @@ blockquote {
     font-style: italic;
     color: #ff79c6;
     border-left: 4px solid #9245f5;
-    padding-left: 10px;
-    margin: 20px auto;
-    max-width: 70%;
+    padding: 15px 20px;
+    margin: 30px 0;
+    background-color: rgba(41, 10, 89, 0.3);
+    box-shadow: 0 0 15px rgba(144, 104, 255, 0.2);
+    border-radius: 0 8px 8px 0;
+    font-size: 1.2rem;
 }
 
 /* Key Abilities Section */
 ul {
     list-style-type: none;
     padding: 0;
+    margin: 20px 0;
 }
 
 ul li {
-    background: rgba(144, 104, 255, 0.2);
-    padding: 12px;
-    margin: 5px auto;
+    background: rgba(41, 10, 89, 0.4);
+    padding: 15px 20px;
+    margin: 10px 0;
     border-radius: 6px;
-    box-shadow: 0 0 12px rgba(144, 104, 255, 0.6);
-    width: 60%;
+    box-shadow: 0 0 12px rgba(144, 104, 255, 0.4);
+    text-align: left;
+    transition: all 0.3s ease;
+    border-left: 4px solid #7b2cbf;
+}
+
+ul li:hover {
+    background: rgba(58, 14, 123, 0.5);
+    transform: translateX(5px);
+    box-shadow: 0 0 15px rgba(144, 104, 255, 0.7);
+}
+
+ul li strong {
+    color: #a855f7;
 }
 
 /* Ordered List Styling */
 ol {
     list-style-type: decimal;
     text-align: left;
-    width: fit-content;
-    margin: auto;
-    padding-left: 20px;
+    padding-left: 30px;
+    margin: 20px 0;
 }
 
-/* Centering Sections */
-.section {
-    text-align: center;
-    margin: 30px auto;
-    max-width: 80%;
+ol li {
+    padding: 8px 0;
 }
 
-/* Ensure specific sections are centered */
-#monargs, #runtime, #startup {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-/* Ensure tables don't break alignment */
+/* Tables */
 table {
-    width: 80%;
-    margin: auto;
+    width: 100%;
+    margin: 30px auto;
     border-collapse: collapse;
-    border-radius: 6px;
+    border-radius: 8px;
     overflow: hidden;
+    box-shadow: 0 0 20px rgba(144, 104, 255, 0.4);
 }
 
 th, td {
-    border: 1px solid #444;
-    padding: 10px;
+    border: 1px solid #301b63;
+    padding: 12px 15px;
     text-align: left;
 }
 
 th {
-    background-color: #3b0764;
+    background-color: #2d1357;
     color: #c084fc;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+}
+
+tr {
+    background-color: rgba(41, 10, 89, 0.3);
+    transition: all 0.3s ease;
+}
+
+tr:hover {
+    background-color: rgba(58, 14, 123, 0.5);
 }
 
 /* Code Blocks */
 pre {
-    background-color: #222;
-    padding: 15px;
-    border-radius: 5px;
+    background-color: #171123;
+    padding: 20px;
+    border-radius: 8px;
     overflow-x: auto;
+    margin: 25px 0;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    border-left: 4px solid #7b2cbf;
 }
 
 code {
@@ -128,17 +164,45 @@ a {
     color: #8be9fd;
     text-decoration: none;
     transition: all 0.3s ease-in-out;
+    font-weight: 600;
 }
 
 a:hover {
     text-decoration: underline;
     color: #ff79c6;
+    text-shadow: 0 0 8px rgba(255, 121, 198, 0.6);
 }
 
 /* Footer */
 footer {
     text-align: center;
-    padding: 20px;
-    font-size: 14px;
+    padding: 30px 20px;
+    font-size: 0.9rem;
     color: #888;
+    margin-top: 50px;
+    border-top: 1px solid rgba(144, 104, 255, 0.3);
+}
+
+/* Sections alignment fix */
+p, ul, ol, pre, blockquote {
+    text-align: left;
+}
+
+/* Media Queries for Responsiveness */
+@media (max-width: 768px) {
+    body {
+        padding: 15px;
+    }
+
+    h1 {
+        font-size: 3rem;
+    }
+
+    h2 {
+        font-size: 2rem;
+    }
+
+    ul li {
+        padding: 12px 15px;
+    }
 }
