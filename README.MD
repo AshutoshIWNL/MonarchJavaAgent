@@ -1,6 +1,6 @@
-# Monarch-Java-Agent
+# MonarchJavaAgent
 
-Monarch-Java-Agent is a powerful Java agent for method monitoring and analysis. It offers various features to track method execution time, print stack traces, log method arguments and return values, capture heap dumps, and gather JVM-related information.
+MonarchJavaAgent is a powerful Java agent for method monitoring and analysis. It offers various features to track method execution time, print stack traces, log method arguments and return values, capture heap dumps, and gather JVM-related information.
 
 ## Features
 
