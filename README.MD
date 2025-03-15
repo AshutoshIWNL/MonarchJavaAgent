@@ -32,7 +32,7 @@ You can attach Monarch-Java-Agent either during startup or during runtime.
 
 **For startup:**
 
-1. Build the agent JAR file.
+1. Download the latest agent JAR file from releases page.
 2. Start your Java application using the `-javaagent` option.
 3. Specify the configuration file and other options as needed.
 
@@ -44,7 +44,7 @@ java -Xbootclasspath/a:/path/to/monarch-java-agent.jar -javaagent:/path/to/monar
 
 **For Runtime:**
 
-1. Build the agent JAR file.
+1. Download the latest agent JAR file from releases page.
 2. Start your application.
 3. Run "monarchAgentStart.bat"/"monarchAgentStart.sh" and provide the requested details.
 
@@ -116,6 +116,14 @@ Where:
     - RET: Log method return value.
     - ADD: Add custom code.
 
+
+## Building from Source
+
+```bash
+git https://github.com/AshutoshIWNL/MonarchJavaAgent.git
+cd MonarchJavaAgent
+mvn clean package
+```
 
 # Author
 

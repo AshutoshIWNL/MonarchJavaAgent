@@ -2,8 +2,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.asm.mja</groupId>
-  <artifactId>monarch-java-agent</artifactId>
-  <name>monarch-java-agent</name>
+  <artifactId>MonarchJavaAgent</artifactId>
+  <name>MonarchJavaAgent</name>
   <version>1.0-SNAPSHOT</version>
   <url>http://maven.apache.org</url>
   <build>
