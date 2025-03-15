@@ -38,7 +38,7 @@ public class AgentConfigurator {
      * @param agentArgs  The agent arguments passed to the JVM.
      */
     public static void setupLogger(String agentArgs) {
-        String agentLogFileDir = null;
+        String agentLogFileDir;
         try {
             agentLogFileDir = fetchAgentLogFileDir(agentArgs);
             if(agentLogFileDir == null)
@@ -50,7 +50,7 @@ public class AgentConfigurator {
 
         String agentLogFile = agentLogFileDir + File.separator + "monarchAgent.log";
 
-        String agentLogLevel = null;
+        String agentLogLevel;
         try {
             agentLogLevel = fetchAgentLogLevel(agentArgs);
             if(agentLogLevel == null)
@@ -184,7 +184,7 @@ public class AgentConfigurator {
     }
 
     public static TraceFileLogger setupTraceFileLogger(String traceFileLocation) {
-        TraceFileLogger traceFileLogger = null;
+        TraceFileLogger traceFileLogger;
         String traceDir = traceFileLocation + File.separator + "Monarch_" + JVMUtils.getJVMPID() + "_" + DateUtils.getFormattedTimestampForFileName();
         File traceDirObj = new File(traceDir);
         if(traceDirObj.mkdir()) {
@@ -212,15 +212,15 @@ public class AgentConfigurator {
     public static void instrument(String agentArgs, Instrumentation inst, String launchType) {
         printStartup(agentArgs);
 
-        String configFile = null;
+        String configFile;
         try {
-            configFile = AgentConfigurator.fetchConfigFile(agentArgs);;
+            configFile = AgentConfigurator.fetchConfigFile(agentArgs);
         } catch (IllegalArgumentException re) {
             AgentLogger.error("Exiting" + AGENT_NAME + " Java Agent due to exception - " + re.getMessage(),re);
             return;
         }
 
-        Config config = null;
+        Config config;
         try {
             config = ConfigParser.parse(configFile);
         } catch (RuntimeException re) {
@@ -262,10 +262,10 @@ public class AgentConfigurator {
         }
 
         if(config.isPrintJVMCpuUsage()) {
-            startJVMCpuMontiorThread(traceFileLogger);
+            startJVMCpuMonitorThread(traceFileLogger);
         }
 
-        List<String> rulesString = new ArrayList<String>(config.getAgentRules());
+        List<String> rulesString = new ArrayList<>(config.getAgentRules());
         List<Rule> rules = RuleParser.parseRules(rulesString);
         GlobalTransformer globalTransformer = new GlobalTransformer(config, traceFileLogger, rules);
 
@@ -312,7 +312,7 @@ public class AgentConfigurator {
      *
      * @param traceFileLogger  The logger to be used by JVM Monitor
      */
-    private static void startJVMCpuMontiorThread(TraceFileLogger traceFileLogger) {
+    private static void startJVMCpuMonitorThread(TraceFileLogger traceFileLogger) {
         JVMCPUMonitor jvmcpuMonitor = JVMCPUMonitor.getInstance();
         jvmcpuMonitor.setLogger(traceFileLogger);
         jvmcpuMonitor.execute();
