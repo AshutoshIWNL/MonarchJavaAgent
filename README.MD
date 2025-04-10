@@ -18,13 +18,13 @@ MonarchJavaAgent is a powerful Java agent for method monitoring and analysis. It
 
 ## Agent Arguments
 
-| Argument          | Description                                                           |
-|-------------------|-----------------------------------------------------------------------|
+| Argument          | Description                                                               |
+|-------------------|---------------------------------------------------------------------------|
 | `configFile`      | Path to the configuration file specifying agent behavior **[Mandatory]**. |
-| `agentLogFileDir` | Directory where initialization logs will be written.                  |
-| `agentLogLevel`   | Log verbosity level (`DEBUG`, `INFO`, `WARN`, `ERROR`).               |
-| `smtpProperties`  | Path to SMTP configuration for sending alert emails.                  |
-| `agentJarPath`    | Path to the MonarchJavaAgent jar **[Mandatory]**.                     |
+| `agentLogFileDir` | Directory where initialization logs will be written.                      |
+| `agentLogLevel`   | Log verbosity level (`DEBUG`, `INFO`, `WARN`, `ERROR`).                   |
+| `smtpProperties`  | Path to SMTP configuration for sending alert emails.                      |
+| `agentJarPath`    | Path to the MonarchJavaAgent jar **[Mandatory for startup attach]**.      |
 
 
 ## Usage

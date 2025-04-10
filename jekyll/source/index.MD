@@ -13,11 +13,11 @@ Monarch is a powerful Java agent for method monitoring and analysis. It offers v
 
 ## Key Abilities
 
-* **Shadow Time Capture:** Command the agent to reveal the precise time taken for any method's execution.
 * **Shadow Trace Revelation:** Unveil the stack trace upon a method's invocation, illuminating the path of execution.
 * **Shadow Argument Whispers:** Capture and log the arguments passed to a method, discerning the secrets within.
 * **Shadow Return Echoes:** Record the return values of methods, listening to the echoes of their completion.
 * **Shadow Code Infusion:** Inject your own commands into the flow of execution, altering the very fabric of your application.
+* **Shadow Time Capture:** Command the agent to reveal the precise time taken for any method's execution (Might get Eternal Slumber, beware).
 * **Shadow Memory Grasp:** Seize a heap dump at critical moments, capturing the memory landscape.
 * **Shadow System Gaze:** Peer into the system flags and JVM options, understanding the environment.
 * **Shadow Resource Monitoring:** Track heap and CPU usage, ensuring the shadows remain under control.
@@ -25,12 +25,13 @@ Monarch is a powerful Java agent for method monitoring and analysis. It offers v
 
 ## MonArgs
 
-| Argument        | Description |
-|----------------|-------------|
-| `configFile`   | Path to the configuration file specifying agent behavior. |
-| `agentLogFileDir` | Directory where initialization logs will be written. |
-| `agentLogLevel` | Log verbosity level (`DEBUG`, `INFO`, `WARN`, `ERROR`). |
-| `smtpProperties` | Path to SMTP configuration for sending alert emails. |
+| Argument        | Description                                                               |
+|----------------|---------------------------------------------------------------------------|
+|`configFile`      | Path to the configuration file specifying agent behavior **[Mandatory]**. |
+| `agentLogFileDir` | Directory where initialization logs will be written.                      |
+| `agentLogLevel` | Log verbosity level (`DEBUG`, `INFO`, `WARN`, `ERROR`).                   |
+| `smtpProperties` | Path to SMTP configuration for sending alert emails.                      |
+| `agentJarPath`    | Path to the MonarchJavaAgent jar **[Mandatory for startup attach]**.      |
 
 
 ## Summoning the Monarch
@@ -46,7 +47,7 @@ You can attach Monarch-Java-Agent either during startup or during runtime.
 Example command to attach the agent:
 
 ```bash 
-java -Xbootclasspath/a:/path/to/monarch-java-agent.jar -javaagent:/path/to/monarch-java-agent.jar=configFile=/path/to/config.yaml,agentLogFileDir=/path/to/log/dir,agentLogLevel=DEBUG,smtpProperties=/path/to/smtpProperties.props YourMainClass
+java -Xverify:none -Xbootclasspath/a:/path/to/monarch-java-agent.jar -javaagent:/path/to/monarch-java-agent.jar=configFile=/path/to/config.yaml,agentLogFileDir=/path/to/log/dir,agentLogLevel=DEBUG,smtpProperties=/path/to/smtpProperties.props YourMainClass
 ```
 
 **For Runtime:**
