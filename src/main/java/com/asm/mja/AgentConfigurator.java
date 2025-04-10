@@ -120,11 +120,11 @@ public class AgentConfigurator {
     }
 
     /**
-     * Fetches the agent log level from the agent arguments.
+     * Fetches the agent jar path from the agent arguments.
      *
      * @param agentArgs  The agent arguments passed to the JVM.
-     * @return The agent log level.
-     * @throws IllegalArgumentException If the agent log level is invalid.
+     * @return The agent jar path.
+     * @throws IllegalArgumentException If the agent jar path is not valid
      */
     private static String fetchAgentJarPath(String agentArgs) throws IllegalArgumentException {
         String agentJarPath = null;
@@ -137,6 +137,10 @@ public class AgentConfigurator {
                         throw new IllegalArgumentException("Invalid arguments passed - " + arg);
                     } else {
                         agentJarPath = prop[1];
+                        File agentJarPathObj = new File(agentJarPath);
+                        if (agentJarPathObj.isDirectory() || !agentJarPathObj.exists()) {
+                            throw new IllegalArgumentException("Agent jar doesn't exist or is a directory - " + agentJarPath);
+                        }
                     }
                 }
             }
