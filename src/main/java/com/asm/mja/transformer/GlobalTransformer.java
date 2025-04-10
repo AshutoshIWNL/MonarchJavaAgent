@@ -38,6 +38,7 @@ public class GlobalTransformer implements ClassFileTransformer {
     private static final String MJA_PACKAGE = "com/asm/mja";
     private final String mode;
     private final String agentAbsolutePath;
+    private static final boolean isJdk9OrLater = Integer.parseInt(System.getProperty("java.version").split("\\.")[0]) >= 9;
 
     public void resetConfig(Config config) {
         this.config = config;
@@ -167,16 +168,21 @@ public class GlobalTransformer implements ClassFileTransformer {
         return modifiedBytes;
     }
 
-    private byte[] performProfiling(String methodName, Action action, ClassLoader loader,
-                                    String formattedClassName, Class<?> classBeingRedefined, byte[] modifiedBytes, int lineNumber) throws IOException, CannotCompileException, NotFoundException {
+    private ClassPool getClassPool() throws NotFoundException {
         ClassPool pool = ClassPool.getDefault();
-        boolean isJdk9OrLater = Integer.parseInt(System.getProperty("java.version").split("\\.")[0]) >= 9;
         if (isJdk9OrLater && mode.equals("attachVM")) {
             // Fix for JDK 9+ visibility issue in agentmain mode:
             // Ensures java.lang classes are accessible by appending the system class loader to ClassPool.
             pool.appendClassPath(agentAbsolutePath);
             pool.appendClassPath(new LoaderClassPath(ClassLoader.getSystemClassLoader()));
         }
+        return pool;
+    }
+
+    //Todo: Use ASM to do this as with JavaAssist, it sometimes throws VerifyError
+    private byte[] performProfiling(String methodName, Action action, ClassLoader loader,
+                                    String formattedClassName, Class<?> classBeingRedefined, byte[] modifiedBytes, int lineNumber) throws IOException, CannotCompileException, NotFoundException {
+        ClassPool pool = getClassPool();
         CtClass ctClass = pool.makeClass(new java.io.ByteArrayInputStream(modifiedBytes));
         //addLoggerField(ctClass);
         for(CtMethod method : ctClass.getDeclaredMethods()) {
@@ -246,14 +252,7 @@ public class GlobalTransformer implements ClassFileTransformer {
 
     private byte[] getArgs(String methodName, Event event, ClassLoader loader, String formattedClassName,
                            Class<?> classBeingRedefined, byte[] modifiedBytes) throws IOException, CannotCompileException, UnsupportedActionException, NotFoundException {
-        ClassPool pool = ClassPool.getDefault();
-        boolean isJdk9OrLater = Integer.parseInt(System.getProperty("java.version").split("\\.")[0]) >= 9;
-        if (isJdk9OrLater && mode.equals("attachVM")) {
-            // Fix for JDK 9+ visibility issue in agentmain mode:
-            // Ensures java.lang classes are accessible by appending the system class loader to ClassPool.
-            pool.appendClassPath(agentAbsolutePath);
-            pool.appendClassPath(new LoaderClassPath(ClassLoader.getSystemClassLoader()));
-        }
+        ClassPool pool = getClassPool();
         CtClass ctClass = pool.makeClass(new java.io.ByteArrayInputStream(modifiedBytes));
         //addLoggerField(ctClass);
         if(formattedClassName.endsWith(methodName)) {
@@ -352,14 +351,7 @@ public class GlobalTransformer implements ClassFileTransformer {
 
     private byte[] getStack(String methodName, Event event, ClassLoader loader,
                             String formattedClassName, Class<?> classBeingRedefined, byte[] modifiedBytes, int lineNumber) throws IOException, CannotCompileException, NotFoundException {
-        ClassPool pool = ClassPool.getDefault();
-        boolean isJdk9OrLater = Integer.parseInt(System.getProperty("java.version").split("\\.")[0]) >= 9;
-        if (isJdk9OrLater && mode.equals("attachVM")) {
-            // Fix for JDK 9+ visibility issue in agentmain mode:
-            // Ensures java.lang classes are accessible by appending the system class loader to ClassPool.
-            pool.appendClassPath(agentAbsolutePath);
-            pool.appendClassPath(new LoaderClassPath(ClassLoader.getSystemClassLoader()));
-        }
+        ClassPool pool = getClassPool();
         CtClass ctClass = pool.makeClass(new java.io.ByteArrayInputStream(modifiedBytes));
         //addLoggerField(ctClass);
         if(formattedClassName.endsWith(methodName)) {
@@ -399,14 +391,7 @@ public class GlobalTransformer implements ClassFileTransformer {
 
     private byte[] getHeap(String methodName, Event event, ClassLoader loader,
                            String formattedClassName, Class<?> classBeingRedefined, byte[] modifiedBytes, int lineNumber) throws IOException, CannotCompileException, NotFoundException {
-        ClassPool pool = ClassPool.getDefault();
-        boolean isJdk9OrLater = Integer.parseInt(System.getProperty("java.version").split("\\.")[0]) >= 9;
-        if (isJdk9OrLater && mode.equals("attachVM")) {
-            // Fix for JDK 9+ visibility issue in agentmain mode:
-            // Ensures java.lang classes are accessible by appending the system class loader to ClassPool.
-            pool.appendClassPath(agentAbsolutePath);
-            pool.appendClassPath(new LoaderClassPath(ClassLoader.getSystemClassLoader()));
-        }
+        ClassPool pool = getClassPool();
         CtClass ctClass = pool.makeClass(new java.io.ByteArrayInputStream(modifiedBytes));
         //addLoggerField(ctClass);
         if(formattedClassName.endsWith(methodName)) {
@@ -454,14 +439,7 @@ public class GlobalTransformer implements ClassFileTransformer {
      */
     private byte[] getReturnValue(String methodName, Event event, ClassLoader loader,
                                   String formattedClassName, Class<?> classBeingRedefined, byte[] modifiedBytes) throws IOException, CannotCompileException, UnsupportedActionException, NotFoundException {
-        ClassPool pool = ClassPool.getDefault();
-        boolean isJdk9OrLater = Integer.parseInt(System.getProperty("java.version").split("\\.")[0]) >= 9;
-        if (isJdk9OrLater && mode.equals("attachVM")) {
-            // Fix for JDK 9+ visibility issue in agentmain mode:
-            // Ensures java.lang classes are accessible by appending the system class loader to ClassPool.
-            pool.appendClassPath(agentAbsolutePath);
-            pool.appendClassPath(new LoaderClassPath(ClassLoader.getSystemClassLoader()));
-        }
+        ClassPool pool = getClassPool();
         CtClass ctClass = pool.makeClass(new java.io.ByteArrayInputStream(modifiedBytes));
         //addLoggerField(ctClass);
         if(formattedClassName.endsWith(methodName)) {
@@ -523,14 +501,7 @@ public class GlobalTransformer implements ClassFileTransformer {
 
     private byte[] addCustomCode(String customCode, String methodName, Event event, ClassLoader loader,
                                  String formattedClassName, Class<?> classBeingRedefined, byte[] modifiedBytes, int lineNumber) throws IOException, CannotCompileException, NotFoundException {
-        ClassPool pool = ClassPool.getDefault();
-        boolean isJdk9OrLater = Integer.parseInt(System.getProperty("java.version").split("\\.")[0]) >= 9;
-        if (isJdk9OrLater && mode.equals("attachVM")) {
-            // Fix for JDK 9+ visibility issue in agentmain mode:
-            // Ensures java.lang classes are accessible by appending the system class loader to ClassPool.
-            pool.appendClassPath(agentAbsolutePath);
-            pool.appendClassPath(new LoaderClassPath(ClassLoader.getSystemClassLoader()));
-        }
+        ClassPool pool = getClassPool();
         CtClass ctClass = pool.makeClass(new java.io.ByteArrayInputStream(modifiedBytes));
         if(formattedClassName.endsWith(methodName)) {
             for (CtConstructor constructor : ctClass.getConstructors()) {

@@ -23,7 +23,8 @@ public class Agent {
      */
     public static void premain(String agentArgs, Instrumentation inst) {
         AgentConfigurator.setupLogger(agentArgs);
-        AgentConfigurator.instrument(agentArgs, inst, JAVA_AGENT_MODE, Agent.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+        //With -Xbootclasspath, codeSource is null, so, will take the jar path from agent args
+        AgentConfigurator.instrument(agentArgs, inst, JAVA_AGENT_MODE, null);
     }
 
     /**

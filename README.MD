@@ -4,12 +4,12 @@ MonarchJavaAgent is a powerful Java agent for method monitoring and analysis. It
 
 ## Features
 
-- **Method Execution Time**: Print the time taken for a method's execution.
 - **Stack Trace Printing**: Print the stack trace when a certain method is invoked.
 - **Argument Logging**: Log the arguments provided to a method.
 - **Return Value Logging**: Log the return value of a method.
 - **Custom code addition**: Add custom code to a method.
 - **Heap Dump Capture**: Take a heap dump when a method is invoked or exits.
+- **Method Execution Time**: Print the time taken for a method's execution (Bit buggy currently and needs bytecode verification to be turned off).
 - **System Flags Printing**: Print system flags of the target application.
 - **JVM Options Printing**: Print JVM options of the target application.
 - **JVM Heap Usage Details**: Print JVM heap usage details of the target application.
@@ -18,12 +18,13 @@ MonarchJavaAgent is a powerful Java agent for method monitoring and analysis. It
 
 ## Agent Arguments
 
-| Argument        | Description |
-|----------------|-------------|
-| `configFile`   | Path to the configuration file specifying agent behavior. |
-| `agentLogFileDir` | Directory where initialization logs will be written. |
-| `agentLogLevel` | Log verbosity level (`DEBUG`, `INFO`, `WARN`, `ERROR`). |
-| `smtpProperties` | Path to SMTP configuration for sending alert emails. |
+| Argument          | Description                                                           |
+|-------------------|-----------------------------------------------------------------------|
+| `configFile`      | Path to the configuration file specifying agent behavior **[Mandatory]**. |
+| `agentLogFileDir` | Directory where initialization logs will be written.                  |
+| `agentLogLevel`   | Log verbosity level (`DEBUG`, `INFO`, `WARN`, `ERROR`).               |
+| `smtpProperties`  | Path to SMTP configuration for sending alert emails.                  |
+| `agentJarPath`    | Path to the MonarchJavaAgent jar **[Mandatory]**.                     |
 
 
 ## Usage
@@ -39,7 +40,7 @@ You can attach Monarch-Java-Agent either during startup or during runtime.
 Example command to attach the agent:
 
 ```bash 
-java -Xbootclasspath/a:/path/to/monarch-java-agent.jar -javaagent:/path/to/monarch-java-agent.jar=configFile=/path/to/config.yaml,agentLogFileDir=/path/to/log/dir,agentLogLevel=DEBUG,smtpProperties=/path/to/smtpProperties.props YourMainClass
+java -Xverify:none -Xbootclasspath/a:/path/to/MonarchJavaAgent.jar -javaagent:/path/to/MonarchJavaAgent.jar=configFile=/path/to/config.yaml,agentLogFileDir=/path/to/log/dir,agentLogLevel=DEBUG,smtpProperties=/path/to/smtpProperties.props,agentJarPath=/path/to/MonarchJavaAgent.jar YourMainClass
 ```
 
 **For Runtime:**

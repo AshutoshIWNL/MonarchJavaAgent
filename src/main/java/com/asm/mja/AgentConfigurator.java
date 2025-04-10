@@ -119,6 +119,31 @@ public class AgentConfigurator {
         return agentLogLevel;
     }
 
+    /**
+     * Fetches the agent log level from the agent arguments.
+     *
+     * @param agentArgs  The agent arguments passed to the JVM.
+     * @return The agent log level.
+     * @throws IllegalArgumentException If the agent log level is invalid.
+     */
+    private static String fetchAgentJarPath(String agentArgs) throws IllegalArgumentException {
+        String agentJarPath = null;
+        if (agentArgs != null) {
+            String[] args = agentArgs.split(",");
+            for (String arg : args) {
+                if (arg.contains("agentJarPath")) {
+                    String[] prop = arg.split("=");
+                    if (prop.length < 2) {
+                        throw new IllegalArgumentException("Invalid arguments passed - " + arg);
+                    } else {
+                        agentJarPath = prop[1];
+                    }
+                }
+            }
+        }
+        return agentJarPath;
+    }
+
     private static String fetchSMTPProperties(String agentArgs) throws IllegalArgumentException {
         String smtpPropertiesFile = null;
         if (agentArgs != null) {
@@ -211,6 +236,10 @@ public class AgentConfigurator {
      */
     public static void instrument(String agentArgs, Instrumentation inst, String launchType, String agentAbsolutePath) {
         printStartup(agentArgs);
+
+        if(agentAbsolutePath == null) {
+            agentAbsolutePath = fetchAgentJarPath(agentArgs);
+        }
 
         String configFile;
         try {
