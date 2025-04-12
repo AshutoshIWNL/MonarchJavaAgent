@@ -14,10 +14,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.ProtectionDomain;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -32,9 +33,10 @@ public class GlobalTransformer implements ClassFileTransformer {
 
     private Config config;
     private List<Rule> rules;
+    private Map<String, List<Rule>> rulesByClassName = new ConcurrentHashMap<>();
     private final TraceFileLogger logger;
-    private Set<String> classesTransformed = ConcurrentHashMap.newKeySet();
-    private Set<String> backupSet = ConcurrentHashMap.newKeySet();
+    private final Set<String> classesTransformed = ConcurrentHashMap.newKeySet();
+    private final Set<String> backupSet = ConcurrentHashMap.newKeySet();
     private static final String MJA_PACKAGE = "com/asm/mja";
     private final String mode;
     private final String agentAbsolutePath;
@@ -52,7 +54,7 @@ public class GlobalTransformer implements ClassFileTransformer {
     public GlobalTransformer(Config config, TraceFileLogger logger, List<Rule> rules, String mode, String agentAbsolutePath) {
         this.config = config;
         this.logger = logger;
-        this.rules = rules;
+        setRules(rules);
         this.mode = mode;
         this.agentAbsolutePath = agentAbsolutePath;
     }
@@ -100,13 +102,8 @@ public class GlobalTransformer implements ClassFileTransformer {
     }
 
     private List<Rule> getAppropriateRules(String formattedClassName) {
-        List<Rule> ruleList = new ArrayList<>();
-        for(Rule rule: rules) {
-            if(rule.getClassName().equalsIgnoreCase(formattedClassName)) {
-                ruleList.add(rule);
-            }
-        }
-        return ruleList;
+        List<Rule> result = rulesByClassName.get(formattedClassName.toLowerCase());
+        return result != null ? result : Collections.emptyList();
     }
 
     public void resetClassesTransformed() {
@@ -115,23 +112,37 @@ public class GlobalTransformer implements ClassFileTransformer {
 
     public void resetRules() {
         this.rules.clear();
+        this.rulesByClassName.clear();
     }
 
     public void setRules(List<Rule> rules) {
         this.rules = rules;
+
+        Map<String, List<Rule>> newMap = new ConcurrentHashMap<>();
+        for (Rule rule : rules) {
+            String className = rule.getClassName().toLowerCase(); // For case-insensitive matching
+            newMap.computeIfAbsent(className, k -> new ArrayList<>()).add(rule);
+        }
+        this.rulesByClassName = newMap;
     }
 
     private void backupByteCode(String formattedClassName, byte[] classFileBuffer, String traceDir) throws BackupCreationException {
-        File backUpDir = new File(traceDir + File.separator + "backup");
-        backUpDir.mkdirs();
+        try {
+            Objects.requireNonNull(formattedClassName, "Class name cannot be null");
+            Objects.requireNonNull(traceDir, "Trace directory cannot be null");
 
-        File classFile = new File(backUpDir, formattedClassName.substring(formattedClassName.lastIndexOf('.') + 1) + ".class");
+            Path backupDirPath = Paths.get(traceDir, "backup");
+            Files.createDirectories(backupDirPath);
 
-        try (FileOutputStream fos = new FileOutputStream(classFile)) {
-            fos.write(classFileBuffer);
+            String safeFileName = formattedClassName.replace('.', '_').replace('$', '_') + ".class";
+            Path classFilePath = backupDirPath.resolve(safeFileName);
+
+            Files.write(classFilePath, classFileBuffer);
             backupSet.add(formattedClassName);
+
+            logger.trace("Backed up class " + formattedClassName + " to " + classFilePath.toAbsolutePath());
         } catch (IOException e) {
-            throw new BackupCreationException(e.getMessage(), e);
+            throw new BackupCreationException("Failed to back up class " + formattedClassName, e);
         }
     }
 
@@ -191,10 +202,10 @@ public class GlobalTransformer implements ClassFileTransformer {
                 method.addLocalVariable("startTime", CtClass.longType);
                 method.insertBefore("try { startTime = System.nanoTime(); } catch(Exception e){}");
 
-                method.insertAfter("com.asm.mja.logging.TraceFileLogger logger = com.asm.mja.logging.TraceFileLogger.getInstance(); try {" +
+                method.insertAfter("try {" +
                         "    long endTime = System.nanoTime();" +
                         "    final long executionTime = (endTime - startTime) / 1000000;" +
-                        "    logger.trace(\"{" + formattedClassName + '.' + methodName + "} | PROFILE | Execution time: \" + executionTime + \"ms\");" +
+                        "    com.asm.mja.logging.TraceFileLogger.getInstance().trace(\"{" + formattedClassName + '.' + methodName + "} | PROFILE | Execution time: \" + executionTime + \"ms\");" +
                         "} catch (Exception e) { }");
 
             }
@@ -266,12 +277,10 @@ public class GlobalTransformer implements ClassFileTransformer {
                     }
 
                     if (parameterTypes.length == 0) {
-                        code.append("com.asm.mja.logging.TraceFileLogger logger = com.asm.mja.logging.TraceFileLogger.getInstance();");
                         code.append("try {");
-                        code.append("    logger.trace(\"{").append(formattedClassName).append('.').append(methodName).append("} | ").append(event).append(" | ").append("ARGS | NULL\");");
+                        code.append("    com.asm.mja.logging.TraceFileLogger.getInstance().trace(\"{").append(formattedClassName).append('.').append(methodName).append("} | ").append(event).append(" | ").append("ARGS | NULL\");");
                         code.append("} catch (Exception e) {}");
                     } else {
-                        code.append("com.asm.mja.logging.TraceFileLogger logger = com.asm.mja.logging.TraceFileLogger.getInstance();");
                         code.append("try {");
                         code.append("    StringBuilder args = new StringBuilder(\"\");");
                         for (int i = 0; i < parameterTypes.length; i++) {
@@ -283,7 +292,7 @@ public class GlobalTransformer implements ClassFileTransformer {
                             }
                             code.append(");");
                         }
-                        code.append("    logger.trace(\"{").append(formattedClassName).append('.').append(methodName).append("} | ").append(event).append(" | ARGS | \" + args.toString());");
+                        code.append("    com.asm.mja.logging.TraceFileLogger.getInstance().trace(\"{").append(formattedClassName).append('.').append(methodName).append("} | ").append(event).append(" | ARGS | \" + args.toString());");
                         code.append("} catch (Exception e) {}");
                     }
 
@@ -308,12 +317,10 @@ public class GlobalTransformer implements ClassFileTransformer {
                     }
 
                     if (parameterTypes.length == 0) {
-                        code.append("com.asm.mja.logging.TraceFileLogger logger = com.asm.mja.logging.TraceFileLogger.getInstance();");
                         code.append("try {");
-                        code.append("    logger.trace(\"{").append(formattedClassName).append('.').append(methodName).append("} | ").append(event).append(" | ").append("ARGS | NULL\");");
+                        code.append("    com.asm.mja.logging.TraceFileLogger.getInstance().trace(\"{").append(formattedClassName).append('.').append(methodName).append("} | ").append(event).append(" | ").append("ARGS | NULL\");");
                         code.append("} catch (Exception e) {}");
                     } else {
-                        code.append("com.asm.mja.logging.TraceFileLogger logger = com.asm.mja.logging.TraceFileLogger.getInstance();");
                         code.append("try {");
                         code.append("    StringBuilder args = new StringBuilder(\"\");");
                         for (int i = 0; i < parameterTypes.length; i++) {
@@ -325,7 +332,7 @@ public class GlobalTransformer implements ClassFileTransformer {
                             }
                             code.append(");");
                         }
-                        code.append("    logger.trace(\"{").append(formattedClassName).append('.').append(methodName).append("} | ").append(event).append(" | ARGS | \" + args.toString());");
+                        code.append("    com.asm.mja.logging.TraceFileLogger.getInstance().trace(\"{").append(formattedClassName).append('.').append(methodName).append("} | ").append(event).append(" | ARGS | \" + args.toString());");
                         code.append("} catch (Exception e) {}");
                     }
 
@@ -356,8 +363,8 @@ public class GlobalTransformer implements ClassFileTransformer {
         //addLoggerField(ctClass);
         if(formattedClassName.endsWith(methodName)) {
             for(CtConstructor constructor: ctClass.getConstructors()) {
-                String insertString = "com.asm.mja.logging.TraceFileLogger logger = com.asm.mja.logging.TraceFileLogger.getInstance(); try { " +
-                            "logger.stack(\"{" + formattedClassName + '.' + methodName + "} | " + event + " | " + "STACK\"" + ", new Throwable().getStackTrace()); " +
+                String insertString = "try { " +
+                            "com.asm.mja.logging.TraceFileLogger.getInstance().stack(\"{" + formattedClassName + '.' + methodName + "} | " + event + " | " + "STACK\"" + ", new Throwable().getStackTrace()); " +
                             "} catch (Exception e) {}";
                 if(event.equals(Event.INGRESS))
                     constructor.insertBefore(insertString);
@@ -369,8 +376,8 @@ public class GlobalTransformer implements ClassFileTransformer {
         } else {
             for(CtMethod method : ctClass.getDeclaredMethods()) {
                 if(method.getName().equals(methodName)) {
-                    String insertString = "com.asm.mja.logging.TraceFileLogger logger = com.asm.mja.logging.TraceFileLogger.getInstance(); try { " +
-                            "logger.stack(\"{" + formattedClassName + '.' + methodName + "} | " + event + " | " + "STACK\"" + ", new Throwable().getStackTrace()); " +
+                    String insertString = "try { " +
+                            "com.asm.mja.logging.TraceFileLogger.getInstance().stack(\"{" + formattedClassName + '.' + methodName + "} | " + event + " | " + "STACK\"" + ", new Throwable().getStackTrace()); " +
                             "} catch (Exception e) {}";
                     if(event.equals(Event.INGRESS))
                         method.insertBefore(insertString);
@@ -396,9 +403,9 @@ public class GlobalTransformer implements ClassFileTransformer {
         //addLoggerField(ctClass);
         if(formattedClassName.endsWith(methodName)) {
             for (CtConstructor constructor : ctClass.getConstructors()) {
-                    String insertString = "com.asm.mja.logging.TraceFileLogger logger = com.asm.mja.logging.TraceFileLogger.getInstance(); try { " +
+                    String insertString = "try { " +
                             "com.asm.mja.utils.HeapDumpUtils.collectHeap();" +
-                            "logger.trace(\"{" + formattedClassName + '.' + methodName + "} | " + event + " | " + "HEAP\"" + "); " +
+                            "com.asm.mja.logging.TraceFileLogger.getInstance().trace(\"{" + formattedClassName + '.' + methodName + "} | " + event + " | " + "HEAP\"" + "); " +
                             "} catch (Exception e) {}";
                     if (event.equals(Event.INGRESS))
                         constructor.insertBefore(insertString);
@@ -411,9 +418,9 @@ public class GlobalTransformer implements ClassFileTransformer {
         else {
             for (CtMethod method : ctClass.getDeclaredMethods()) {
                 if (method.getName().equals(methodName)) {
-                    String insertString = "com.asm.mja.logging.TraceFileLogger logger = com.asm.mja.logging.TraceFileLogger.getInstance(); try { " +
+                    String insertString = "try { " +
                             "com.asm.mja.utils.HeapDumpUtils.collectHeap();" +
-                            "logger.trace(\"{" + formattedClassName + '.' + methodName + "} | " + event + " | " + "HEAP\"" + "); " +
+                            "com.asm.mja.logging.TraceFileLogger.getInstance().trace(\"{" + formattedClassName + '.' + methodName + "} | " + event + " | " + "HEAP\"" + "); " +
                             "} catch (Exception e) {}";
                     if (event.equals(Event.INGRESS))
                         method.insertBefore(insertString);
@@ -461,26 +468,23 @@ public class GlobalTransformer implements ClassFileTransformer {
 
                     if (returnType.equals(CtClass.voidType)) {
                         // For void methods, no return value to capture
-                        code.append("com.asm.mja.logging.TraceFileLogger logger = com.asm.mja.logging.TraceFileLogger.getInstance();");
-                        code.append("logger.trace(\"{").append(formattedClassName).append('.').append(methodName).append("} | ").append(event).append(" | RET | VOID\");");
+                        code.append("com.asm.mja.logging.TraceFileLogger.getInstance().trace(\"{").append(formattedClassName).append('.').append(methodName).append("} | ").append(event).append(" | RET | VOID\");");
                     } else if (returnType.isPrimitive()) {
                         // For primitive types, no need to call toString()
                         returnVariableName = "$$_returnValue";
                         code.append(returnType.getName()).append(' ').append(returnVariableName).append(" = ($r) $_;");
-                        code.append("com.asm.mja.logging.TraceFileLogger logger = com.asm.mja.logging.TraceFileLogger.getInstance();");
                         code.append("try {");
-                        code.append("    logger.trace(\"{").append(formattedClassName).append('.').append(methodName).append("} | ").append(event).append(" | RET | \" + ").append(returnVariableName).append(");");
+                        code.append("    com.asm.mja.logging.TraceFileLogger.getInstance().trace(\"{").append(formattedClassName).append('.').append(methodName).append("} | ").append(event).append(" | RET | \" + ").append(returnVariableName).append(");");
                         code.append("} catch (Exception e) {}");
                     } else {
                         // For non-primitive types, check for null before calling toString()
                         returnVariableName = "$$_returnValue";
                         code.append(returnType.getName()).append(' ').append(returnVariableName).append(" = ($r) $_;");
-                        code.append("com.asm.mja.logging.TraceFileLogger logger = com.asm.mja.logging.TraceFileLogger.getInstance();");
                         code.append("try {");
                         code.append("    if (").append(returnVariableName).append(" != null) {");
-                        code.append("        logger.trace(\"{").append(formattedClassName).append('.').append(methodName).append("} | ").append(event).append(" | RET | \" + ").append(returnVariableName).append(".toString());");
+                        code.append("        com.asm.mja.logging.TraceFileLogger.getInstance().trace(\"{").append(formattedClassName).append('.').append(methodName).append("} | ").append(event).append(" | RET | \" + ").append(returnVariableName).append(".toString());");
                         code.append("    } else {");
-                        code.append("        logger.trace(\"{").append(formattedClassName).append('.').append(methodName).append("} | ").append(event).append(" | RET | NULL\");");
+                        code.append("        com.asm.mja.logging.TraceFileLogger.getInstance().trace(\"{").append(formattedClassName).append('.').append(methodName).append("} | ").append(event).append(" | RET | NULL\");");
                         code.append("    }");
                         code.append("} catch (Exception e) {}");
                     }
@@ -506,8 +510,7 @@ public class GlobalTransformer implements ClassFileTransformer {
         if(formattedClassName.endsWith(methodName)) {
             for (CtConstructor constructor : ctClass.getConstructors()) {
                     String safeCustomCode = "try { " + customCode + " } catch (Exception e) { " +
-                            "com.asm.mja.logging.TraceFileLogger logger = com.asm.mja.logging.TraceFileLogger.getInstance();" +
-                            "logger.error(\"Custom code threw an exception in " + formattedClassName + '.' + methodName + ": \" + e.getMessage());" +
+                            "com.asm.mja.logging.TraceFileLogger.getInstance().error(\"Custom code threw an exception in " + formattedClassName + '.' + methodName + ": \" + e.getMessage());" +
                             "}";
                     if(event.equals(Event.INGRESS))
                         constructor.insertBefore(safeCustomCode);
@@ -521,8 +524,7 @@ public class GlobalTransformer implements ClassFileTransformer {
             for (CtMethod method : ctClass.getDeclaredMethods()) {
                 if (method.getName().equals(methodName)) {
                     String safeCustomCode = "try { " + customCode + " } catch (Exception e) { " +
-                            "com.asm.mja.logging.TraceFileLogger logger = com.asm.mja.logging.TraceFileLogger.getInstance();" +
-                            "logger.error(\"Custom code threw an exception in " + formattedClassName + '.' + methodName + ": \" + e.getMessage());" +
+                            "com.asm.mja.logging.TraceFileLogger.getInstance().error(\"Custom code threw an exception in " + formattedClassName + '.' + methodName + ": \" + e.getMessage());" +
                             "}";
                     if(event.equals(Event.INGRESS))
                         method.insertBefore(safeCustomCode);

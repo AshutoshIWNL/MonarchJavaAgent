@@ -179,19 +179,30 @@ public class InstrumentationManager implements Runnable {
         logger.trace("Reverted previous instrumentation");
     }
 
+    private Class<?> findLoadedClass(Instrumentation instrumentation, String className) throws ClassNotFoundException {
+        for (Class<?> loadedClass : instrumentation.getAllLoadedClasses()) {
+            if (loadedClass.getName().equals(className)) {
+                return loadedClass;
+            }
+        }
+        throw new ClassNotFoundException("Class not found in loaded classes: " + className);
+    }
+
     private void loadOriginalByteCode(String className) {
-        String backupClassPath =  constructBackupClassPath(className);
+        String backupClassPath = constructBackupClassPath(className);
         try {
             byte[] originalBytecode = Files.readAllBytes(Paths.get(backupClassPath));
             bytecodeCache.put(className, originalBytecode);
-            instrumentation.redefineClasses(new ClassDefinition(Class.forName(className), originalBytecode));
+            Class<?> targetClass = findLoadedClass(instrumentation, className);
+            instrumentation.redefineClasses(new ClassDefinition(targetClass, originalBytecode));
         } catch (IOException | UnmodifiableClassException | ClassNotFoundException e) {
             logger.error("Failed to read bytecode for class " + className + "; Exception: " + e.getMessage(), e);
         }
     }
 
     private String constructBackupClassPath(String className) {
-        return logger.getTraceDir() + File.separator + "backup" + File.separator + className.substring(className.lastIndexOf(".") + 1) + ".class";
+        String safeFileName = className.replace('.', '_').replace('$', '_') + ".class";
+        return logger.getTraceDir() + File.separator + "backup" + File.separator + safeFileName;
     }
 
     public void execute() {
