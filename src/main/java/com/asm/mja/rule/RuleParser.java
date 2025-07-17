@@ -44,6 +44,13 @@ public class RuleParser {
                     }
                     Action action = Action.valueOf(parts[3]);
 
+                    String filterName=null;
+                    if(action==Action.STACK && parts.length >4){
+                        Matcher matcher=addPattern.matcher(parts[4]);
+                        if(matcher.find()){
+                            filterName=matcher.group(1);
+                        }
+                    }
                     String customCode = null;
                     if (action == Action.ADD && parts.length > 4) {
                         Matcher matcher = addPattern.matcher(parts[4]);
@@ -52,7 +59,7 @@ public class RuleParser {
                         }
                     }
 
-                    return new Rule(className, methodName, event, action, customCode, lineNumber);
+                    return new Rule(className, methodName, event, action, customCode, lineNumber ,filterName);
                 })
                 .collect(Collectors.toList());
     }

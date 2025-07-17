@@ -17,6 +17,7 @@ public class Rule {
     private String customCode;
     private int lineNumber;
 
+    private String filterName;
     public Rule(String className, String methodName, Event event, Action action, int lineNumber) {
         this(className, methodName, event, action, null, lineNumber);
     }
@@ -29,6 +30,16 @@ public class Rule {
         this.lineNumber = lineNumber;
         this.customCode = customCode;
     }
+    public Rule(String className, String methodName, Event event, Action action, String customCode, int lineNumber,String filterName) {
+        this.className = className;
+        this.methodName = methodName;
+        this.event = event;
+        this.action = action;
+        this.lineNumber = lineNumber;
+        this.customCode = customCode;
+        this.filterName=filterName;
+    }
+
 
     public String getClassName() {
         return className;
@@ -76,5 +87,12 @@ public class Rule {
 
     public void setCustomCode(String customCode) {
         this.customCode = customCode;
+    }
+
+    public void setFilterName(String filterName){
+        this.filterName=filterName;
+    }
+    public String getFilterName(){
+        return filterName;
     }
 }
