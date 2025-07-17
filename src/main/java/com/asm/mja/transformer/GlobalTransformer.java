@@ -4,6 +4,7 @@ import com.asm.mja.config.Config;
 import com.asm.mja.exception.BackupCreationException;
 import com.asm.mja.exception.TransformException;
 import com.asm.mja.exception.UnsupportedActionException;
+import com.asm.mja.logging.AgentLogger;
 import com.asm.mja.rule.Rule;
 import com.asm.mja.logging.TraceFileLogger;
 import com.asm.mja.utils.ClassLoaderTracer;
@@ -159,13 +160,13 @@ public class GlobalTransformer implements ClassFileTransformer {
             try {
                 switch (rule.getEvent()) {
                     case INGRESS:
-                        modifiedBytes = performIngressAction(rule.getMethodName(), rule.getAction(), rule.getCustomCode(), loader, formattedClassName, classBeingRedefined, modifiedBytes);
+                        modifiedBytes = performIngressAction(rule.getMethodName(), rule.getAction(), rule.getCustomCode(), loader, formattedClassName, classBeingRedefined, modifiedBytes,rule.getFilterName());
                         break;
                     case EGRESS:
-                        modifiedBytes = performEgressAction(rule.getMethodName(), rule.getAction(), rule.getCustomCode(), loader, formattedClassName, classBeingRedefined, modifiedBytes);
+                        modifiedBytes = performEgressAction(rule.getMethodName(), rule.getAction(), rule.getCustomCode(), loader, formattedClassName, classBeingRedefined, modifiedBytes,rule.getFilterName());
                         break;
                     case CODEPOINT:
-                        modifiedBytes = performCodePointAction(rule.getMethodName(), rule.getAction(), rule.getCustomCode(), loader, formattedClassName, classBeingRedefined, modifiedBytes, rule.getLineNumber());
+                        modifiedBytes = performCodePointAction(rule.getMethodName(), rule.getAction(), rule.getCustomCode(), loader, formattedClassName, classBeingRedefined, modifiedBytes, rule.getLineNumber(),rule.getFilterName());
                         break;
                     case PROFILE:
                         modifiedBytes = performProfiling(rule.getMethodName(), rule.getAction(), loader, formattedClassName, classBeingRedefined, modifiedBytes, rule.getLineNumber());
@@ -219,10 +220,10 @@ public class GlobalTransformer implements ClassFileTransformer {
     }
 
     private byte[] performCodePointAction(String methodName, Action action, String customCode, ClassLoader loader,
-                                   String formattedClassName, Class<?> classBeingRedefined, byte[] modifiedBytes, int lineNumber) throws IOException, CannotCompileException, NotFoundException {
+                                   String formattedClassName, Class<?> classBeingRedefined, byte[] modifiedBytes, int lineNumber ,String filterName) throws IOException, CannotCompileException, NotFoundException {
         switch (action) {
             case STACK:
-                return getStack(methodName, Event.CODEPOINT, loader, formattedClassName, classBeingRedefined, modifiedBytes, lineNumber);
+                return getStack(methodName, Event.CODEPOINT, loader, formattedClassName, classBeingRedefined, modifiedBytes, lineNumber,filterName);
             case HEAP:
                 return getHeap(methodName, Event.CODEPOINT, loader, formattedClassName, classBeingRedefined, modifiedBytes, lineNumber);
             case ADD:
@@ -232,10 +233,10 @@ public class GlobalTransformer implements ClassFileTransformer {
     }
 
     private byte[] performEgressAction(String methodName, Action action, String customCode, ClassLoader loader,
-                                     String formattedClassName, Class<?> classBeingRedefined, byte[] modifiedBytes) throws IOException, CannotCompileException, UnsupportedActionException, NotFoundException {
+                                     String formattedClassName, Class<?> classBeingRedefined, byte[] modifiedBytes,String filterName) throws IOException, CannotCompileException, UnsupportedActionException, NotFoundException {
         switch (action) {
             case STACK:
-                return getStack(methodName, Event.EGRESS, loader, formattedClassName, classBeingRedefined, modifiedBytes, 0);
+                return getStack(methodName, Event.EGRESS, loader, formattedClassName, classBeingRedefined, modifiedBytes, 0,filterName);
             case HEAP:
                 return getHeap(methodName, Event.EGRESS, loader, formattedClassName, classBeingRedefined, modifiedBytes, 0);
             case RET:
@@ -247,10 +248,10 @@ public class GlobalTransformer implements ClassFileTransformer {
     }
 
     private byte[] performIngressAction(String methodName, Action action, String customCode, ClassLoader loader,
-                                      String formattedClassName, Class<?> classBeingRedefined, byte[] modifiedBytes) throws IOException, CannotCompileException, UnsupportedActionException, NotFoundException {
+                                      String formattedClassName, Class<?> classBeingRedefined, byte[] modifiedBytes,String filterName) throws IOException, CannotCompileException, UnsupportedActionException, NotFoundException {
         switch (action) {
             case STACK:
-                return getStack(methodName, Event.INGRESS, loader, formattedClassName, classBeingRedefined, modifiedBytes, 0);
+                return getStack(methodName, Event.INGRESS, loader, formattedClassName, classBeingRedefined, modifiedBytes, 0,filterName);
             case HEAP:
                 return getHeap(methodName, Event.INGRESS, loader, formattedClassName, classBeingRedefined, modifiedBytes, 0);
             case ARGS:
@@ -357,31 +358,60 @@ public class GlobalTransformer implements ClassFileTransformer {
 
 
     private byte[] getStack(String methodName, Event event, ClassLoader loader,
-                            String formattedClassName, Class<?> classBeingRedefined, byte[] modifiedBytes, int lineNumber) throws IOException, CannotCompileException, NotFoundException {
+                            String formattedClassName, Class<?> classBeingRedefined, byte[] modifiedBytes, int lineNumber, String filterName) throws IOException, CannotCompileException, NotFoundException {
         ClassPool pool = getClassPool();
         CtClass ctClass = pool.makeClass(new java.io.ByteArrayInputStream(modifiedBytes));
-        //addLoggerField(ctClass);
-        if(formattedClassName.endsWith(methodName)) {
-            for(CtConstructor constructor: ctClass.getConstructors()) {
-                String insertString = "try { " +
-                            "com.asm.mja.logging.TraceFileLogger.getInstance().stack(\"{" + formattedClassName + '.' + methodName + "} | " + event + " | " + "STACK\"" + ", new Throwable().getStackTrace()); " +
-                            "} catch (Exception e) {}";
-                if(event.equals(Event.INGRESS))
+
+
+        // If 'filterName' is set, logs only if the matching method/class is found in the call stack.
+        StringBuilder code = new StringBuilder();
+        code.append("{\n");
+        code.append("  try {\n");
+        code.append("  StackTraceElement[] stack = new Throwable().getStackTrace();\n");
+
+        if (filterName != null && !filterName.isEmpty()) {
+            code.append("  boolean shouldLog = true;\n");
+            code.append("  for (int i = 0; i < stack.length; i++) {\n");
+            code.append("    StackTraceElement element = stack[i];\n");
+            code.append("    String signature = element.getClassName() + \".\" + element.getMethodName();\n");
+            code.append("    if (signature.indexOf(\"").append(filterName).append("\") >= 0) {\n");
+            code.append("      break;\n");
+            code.append("    }\n");
+            code.append("    if (i == stack.length - 1) {\n");
+            code.append("      shouldLog = false;\n");
+            code.append("    }\n");
+            code.append("  }\n");
+            code.append("  if (!shouldLog) { return; }\n");
+        }
+
+        code.append("  com.asm.mja.logging.TraceFileLogger.getInstance()\n");
+        code.append("    .stack(\"{").append(formattedClassName).append(".")
+                .append(methodName).append("} | ").append(event)
+                .append(" | STACK\", stack);\n");
+        code.append("  } catch (Exception e) {\n");
+        code.append("  }\n");
+        code.append("}\n");
+
+        String insertString = code.toString();
+
+        if (formattedClassName.endsWith(methodName)) {
+            for (CtConstructor constructor : ctClass.getConstructors()) {
+                if (event.equals(Event.INGRESS))
                     constructor.insertBefore(insertString);
-                else if(event.equals(Event.EGRESS))
+                else if (event.equals(Event.EGRESS))
                     constructor.insertAfter(insertString);
                 else
                     constructor.insertAt(lineNumber, insertString);
             }
         } else {
-            for(CtMethod method : ctClass.getDeclaredMethods()) {
-                if(method.getName().equals(methodName)) {
-                    String insertString = "try { " +
-                            "com.asm.mja.logging.TraceFileLogger.getInstance().stack(\"{" + formattedClassName + '.' + methodName + "} | " + event + " | " + "STACK\"" + ", new Throwable().getStackTrace()); " +
-                            "} catch (Exception e) {}";
-                    if(event.equals(Event.INGRESS))
+            for (CtMethod method : ctClass.getDeclaredMethods()) {
+                if (method.getName().equals(methodName)) {
+                    if (event.equals(Event.INGRESS)) {
+                        AgentLogger.info("Insert Before Code:" + insertString);
                         method.insertBefore(insertString);
-                    else if(event.equals(Event.EGRESS))
+
+                    }
+                    else if (event.equals(Event.EGRESS))
                         method.insertAfter(insertString);
                     else
                         method.insertAt(lineNumber, insertString);
