@@ -311,7 +311,8 @@ public class AgentConfigurator {
 
             try {
                 AgentLogger.debug("Re-transforming classes: " + Arrays.toString(classesToInstrument));
-                inst.retransformClasses(classesToInstrument);
+                if(classesToInstrument.length > 0)
+                    inst.retransformClasses(classesToInstrument);
             } catch (UnmodifiableClassException e) {
                 AgentLogger.error("Error re-transforming classes: " + e.getMessage(), e);
             }
