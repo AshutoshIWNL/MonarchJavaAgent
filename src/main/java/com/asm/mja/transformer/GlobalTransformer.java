@@ -367,28 +367,33 @@ public class GlobalTransformer implements ClassFileTransformer {
         StringBuilder code = new StringBuilder();
         code.append("{\n");
         code.append("  try {\n");
-        code.append("  StackTraceElement[] stack = new Throwable().getStackTrace();\n");
+        code.append("    StackTraceElement[] stack = new Throwable().getStackTrace();\n");
 
         if (filterName != null && !filterName.isEmpty()) {
-            code.append("  boolean shouldLog = true;\n");
-            code.append("  for (int i = 0; i < stack.length; i++) {\n");
-            code.append("    StackTraceElement element = stack[i];\n");
-            code.append("    String signature = element.getClassName() + \".\" + element.getMethodName();\n");
-            code.append("    if (signature.indexOf(\"").append(filterName).append("\") >= 0) {\n");
-            code.append("      break;\n");
+            code.append("    boolean shouldLog = false;\n");
+            code.append("    for (int i = 0; i < stack.length; i++) {\n");
+            code.append("      StackTraceElement element = stack[i];\n");
+            code.append("      String signature = element.getClassName() + \".\" + element.getMethodName();\n");
+            code.append("      if (signature.indexOf(\"").append(filterName).append("\") >= 0) {\n");
+            code.append("        shouldLog = true;\n");
+            code.append("        break;\n");
+            code.append("      }\n");
             code.append("    }\n");
-            code.append("    if (i == stack.length - 1) {\n");
-            code.append("      shouldLog = false;\n");
+            code.append("    if (shouldLog) {\n");
+            code.append("      com.asm.mja.logging.TraceFileLogger.getInstance()\n");
+            code.append("        .stack(\"{").append(formattedClassName).append(".")
+                    .append(methodName).append("} | ").append(event)
+                    .append(" | STACK\", stack);\n");
             code.append("    }\n");
-            code.append("  }\n");
-            code.append("  if (!shouldLog) { return; }\n");
+        } else {
+            code.append("    com.asm.mja.logging.TraceFileLogger.getInstance()\n");
+            code.append("      .stack(\"{").append(formattedClassName).append(".")
+                    .append(methodName).append("} | ").append(event)
+                    .append(" | STACK\", stack);\n");
         }
 
-        code.append("  com.asm.mja.logging.TraceFileLogger.getInstance()\n");
-        code.append("    .stack(\"{").append(formattedClassName).append(".")
-                .append(methodName).append("} | ").append(event)
-                .append(" | STACK\", stack);\n");
         code.append("  } catch (Exception e) {\n");
+        code.append("    e.printStackTrace();\n");  // Optional: route to TraceFileLogger if you prefer
         code.append("  }\n");
         code.append("}\n");
 
