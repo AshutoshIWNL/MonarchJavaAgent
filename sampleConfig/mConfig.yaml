@@ -6,7 +6,7 @@ agentRules:
   - ClassA::methodA@INGRESS::ARGS
   - ClassA::methodA@EGRESS::RET
   - ClassA::methodB@INGRESS::ARGS
-  - ClassA::methodB@INGRESS::STACK
+  - ClassA::methodB@INGRESS::STACK::[com.asm]
   - ClassA::methodB@EGRESS::STACK
   - ClassA::methodB@EGRESS::RET
   - ClassB::methodC@PROFILE

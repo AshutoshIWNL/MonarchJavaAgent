@@ -4,8 +4,7 @@ MonarchJavaAgent is a powerful Java agent for method monitoring and analysis. It
 
 ## Features
 
-- **Stack Trace Printing**: Print the stack trace when a certain method is invoked.
-- **Argument Logging**: Log the arguments provided to a method.
+- **Stack Trace Printing**: Print the stack trace when a certain method is invoked. Supports conditional printing only if a specific class/method appears in the current stack trace.
 - **Return Value Logging**: Log the return value of a method.
 - **Custom code addition**: Add custom code to a method.
 - **Heap Dump Capture**: Take a heap dump when a method is invoked or exits.
@@ -72,7 +71,7 @@ agentRules:
   - ClassA::methodA@INGRESS::ARGS
   - ClassA::methodA@EGRESS::RET
   - ClassA::methodB@INGRESS::ARGS
-  - ClassA::methodB@INGRESS::STACK
+  - ClassA::methodB@INGRESS::STACK::[com.asm]
   - ClassA::methodB@EGRESS::STACK
   - ClassA::methodB@EGRESS::RET
   - ClassB::methodC@PROFILE
