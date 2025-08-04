@@ -26,20 +26,23 @@ public class EmailUtils {
     private static boolean isSendAlertEmail;
     private static List<String> emailRecipientList;
     private static volatile Session emailSession = null;
+    private static boolean isConfigured = false;
 
     public static void init(String smtpPropertiesFile, boolean sendAlertEmail, List<String> recipientList) {
-        try (FileInputStream input = new FileInputStream(smtpPropertiesFile)) {
-            Properties smtpProps = new Properties();
-            smtpProps.load(input);
-            SMTP_HOST = smtpProps.getProperty("smtp.host");
-            SMTP_PORT = smtpProps.getProperty("smtp.port");
-            SMTP_AUTH = Boolean.parseBoolean(smtpProps.getProperty("smtp.auth"));
-            SENDER_EMAIL = smtpProps.getProperty("smtp.user");
-            SENDER_PASSWORD = smtpProps.getProperty("smtp.password");
-            SMTP_TLS = Boolean.parseBoolean(smtpProps.getProperty("smtp.tls"));
-        } catch (IOException e) {
-            logger.error("Error loading SMTP properties file: " + smtpPropertiesFile, e);
-            throw new RuntimeException("Failed to load SMTP properties", e);
+        if(smtpPropertiesFile != null) {
+            try (FileInputStream input = new FileInputStream(smtpPropertiesFile)) {
+                Properties smtpProps = new Properties();
+                smtpProps.load(input);
+                SMTP_HOST = smtpProps.getProperty("smtp.host");
+                SMTP_PORT = smtpProps.getProperty("smtp.port");
+                SMTP_AUTH = Boolean.parseBoolean(smtpProps.getProperty("smtp.auth"));
+                SENDER_EMAIL = smtpProps.getProperty("smtp.user");
+                SENDER_PASSWORD = smtpProps.getProperty("smtp.password");
+                SMTP_TLS = Boolean.parseBoolean(smtpProps.getProperty("smtp.tls"));
+                isConfigured = true;
+            } catch (IOException e) {
+                logger.error("Error loading SMTP properties file: " + smtpPropertiesFile + "; Emails will not be sent", e);
+            }
         }
         isSendAlertEmail = sendAlertEmail;
         emailRecipientList = recipientList;
@@ -55,7 +58,7 @@ public class EmailUtils {
     }
 
     public static void sendHeapUsageAlert(String heapUsage) {
-        if(!isSendAlertEmail)
+        if(!isSendAlertEmail || !isConfigured)
             return;
         String subject = "JVM Heap Usage Alert";
         String body = "Warning: Your JVM heap usage has exceeded 90%. Current usage: " + heapUsage + "M";
@@ -64,7 +67,7 @@ public class EmailUtils {
     }
 
     public static void sendCPULoadAlert(String cpuUsage) {
-        if(!isSendAlertEmail) {
+        if(!isSendAlertEmail || !isConfigured) {
             return;
         }
         String subject = "JVM CPU Load Alert";
@@ -78,8 +81,12 @@ public class EmailUtils {
         try {
             MimeMessage message = new MimeMessage(getSession(properties));
             message.setFrom(new InternetAddress(SENDER_EMAIL));
-            for (String recipient : emailRecipientList) {
-                message.addRecipient(Message.RecipientType.TO, new InternetAddress(recipient));
+            if (emailRecipientList != null && !emailRecipientList.isEmpty()) {
+                for (String recipient : emailRecipientList) {
+                    message.addRecipient(Message.RecipientType.TO, new InternetAddress(recipient));
+                }
+            } else {
+                logger.warn("Email recipient list is null or empty. No alert email will be sent.");
             }
             message.setSubject(subject);
             message.setText(body);

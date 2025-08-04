@@ -228,7 +228,13 @@ public class AgentConfigurator {
     }
 
     public static void setupSMTP(String agentArgs, boolean isSendAlertEmail, List<String> emailRecipientList) {
-        EmailUtils.init(fetchSMTPProperties(agentArgs), isSendAlertEmail, emailRecipientList);
+        if(isSendAlertEmail) {
+            String smtpFile = fetchSMTPProperties(agentArgs);
+            if (smtpFile == null || smtpFile.isEmpty()) {
+                AgentLogger.warning("Alert email is enabled, but SMTP config file is missing in agent args. Email alerts will be disabled.");
+            }
+            EmailUtils.init(smtpFile, true, emailRecipientList);
+        }
     }
 
     /**
