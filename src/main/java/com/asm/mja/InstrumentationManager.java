@@ -125,7 +125,7 @@ public class InstrumentationManager implements Runnable {
         resetTransformerState();
         revertInstrumentation(rules);
 
-        if (!config.shouldInstrument()) {
+        if (!config.isShouldInstrument()) {
             logger.trace("Going to shutdown instrumentation");
             shutdown();
             return;
