@@ -20,6 +20,9 @@ printJVMSystemProperties: true
 printEnvironmentVariables: true
 printJVMHeapUsage: true
 printJVMCpuUsage: true
+printJVMThreadUsage: true
+printJVMGCStats: true
+printJVMClassLoaderStats: true
 maxHeapDumps: 3
 sendAlertEmails: true
 emailRecipientList:

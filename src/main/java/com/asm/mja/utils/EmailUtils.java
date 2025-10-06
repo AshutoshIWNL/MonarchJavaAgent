@@ -7,6 +7,8 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
@@ -57,11 +59,72 @@ public class EmailUtils {
         return properties;
     }
 
+    public static void sendDeadlockAlert(int deadlockedThreadCount) {
+        if(!isSendAlertEmail || !isConfigured)
+            return;
+
+        String subject = "CRITICAL: JVM Deadlock Detected";
+        String body = String.format(
+                "CRITICAL: Deadlock detected in JVM!\n\n" +
+                        "Number of deadlocked threads: %d\n" +
+                        "Timestamp: %s\n\n" +
+                        "This requires immediate attention as deadlocked threads are blocking application execution.\n" +
+                        "Please investigate the thread dump and resolve the deadlock.",
+                deadlockedThreadCount,
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())
+        );
+
+        sendEmail(subject, body);
+    }
+
+    public static void sendThreadCountAlert(int threadCount) {
+        if(!isSendAlertEmail || !isConfigured)
+            return;
+
+        String subject = "WARNING: High JVM Thread Count Alert";
+        String body = String.format(
+                "Warning: JVM thread count has exceeded the threshold.\n\n" +
+                        "Current thread count: %d\n" +
+                        "Threshold: %d\n" +
+                        "Timestamp: %s\n\n" +
+                        "High thread count may indicate:\n" +
+                        "- Thread leaks\n" +
+                        "- Excessive concurrent operations\n" +
+                        "- Resource pool exhaustion\n\n" +
+                        "Please investigate thread dumps and monitor for increasing trend.",
+                threadCount,
+                5000,
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())
+        );
+
+        sendEmail(subject, body);
+    }
+
     public static void sendHeapUsageAlert(String heapUsage) {
         if(!isSendAlertEmail || !isConfigured)
             return;
-        String subject = "JVM Heap Usage Alert";
-        String body = "Warning: Your JVM heap usage has exceeded 90%. Current usage: " + heapUsage + "M";
+
+        String subject = "WARNING: High JVM Heap Usage Alert";
+        String body = String.format(
+                "Warning: JVM heap memory usage has exceeded the threshold.\n\n" +
+                        "Details:\n" +
+                        "- Current heap usage: %s%%\n" +
+                        "- Threshold: 90%%\n" +
+                        "- Timestamp: %s\n\n" +
+                        "High heap usage may indicate:\n" +
+                        "- Memory leaks\n" +
+                        "- Insufficient heap size allocation\n" +
+                        "- Excessive object creation\n" +
+                        "- Inefficient garbage collection\n\n" +
+                        "Recommended actions:\n" +
+                        "1. Monitor GC activity and frequency\n" +
+                        "2. Analyze heap dumps for memory leaks\n" +
+                        "3. Review recent deployments for memory-intensive changes\n" +
+                        "4. Consider increasing heap size if consistently high\n" +
+                        "5. If usage continues to rise, prepare for potential OutOfMemoryError",
+                heapUsage,
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())
+        );
 
         sendEmail(subject, body);
     }
@@ -70,9 +133,121 @@ public class EmailUtils {
         if(!isSendAlertEmail || !isConfigured) {
             return;
         }
-        String subject = "JVM CPU Load Alert";
-        String body = "Warning: Your JVM CPU usage has exceeded 90%. Current CPU load: " + cpuUsage + "%";
-        EmailUtils.sendEmail(subject, body); // This can be refactored if needed
+
+        String subject = "WARNING: High JVM CPU Usage Alert";
+        String body = String.format(
+                "Warning: JVM CPU usage has exceeded the threshold.\n\n" +
+                        "Details:\n" +
+                        "- Current CPU load: %s%%\n" +
+                        "- Threshold: 90%%\n" +
+                        "- Timestamp: %s\n\n" +
+                        "High CPU usage may indicate:\n" +
+                        "- Inefficient algorithms or loops\n" +
+                        "- Excessive garbage collection activity\n" +
+                        "- High request volume\n" +
+                        "- Resource contention or blocking operations\n\n" +
+                        "Recommended actions:\n" +
+                        "1. Check thread dumps for CPU-intensive threads\n" +
+                        "2. Review GC logs - excessive GC can cause high CPU\n" +
+                        "3. Profile the application to identify hot spots\n" +
+                        "4. Monitor request rates and thread pool usage\n" +
+                        "5. Consider scaling if load is legitimate traffic",
+                cpuUsage,
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())
+        );
+
+        sendEmail(subject, body);
+    }
+
+    public static void sendGCAlert(double gcTimePercent) {
+        if(!isSendAlertEmail || !isConfigured)
+            return;
+
+        String subject = "WARNING: High JVM Garbage Collection Activity";
+        String body = String.format(
+                "Warning: JVM is spending excessive time in garbage collection.\n\n" +
+                        "Details:\n" +
+                        "- Time spent in GC: %.2f%%\n" +
+                        "- Threshold: 10%%\n" +
+                        "- Timestamp: %s\n\n" +
+                        "High GC activity may indicate:\n" +
+                        "- Memory pressure (heap size too small)\n" +
+                        "- Memory leaks causing frequent collections\n" +
+                        "- High allocation rate (creating too many objects)\n" +
+                        "- Inefficient object lifecycle management\n\n" +
+                        "Recommended actions:\n" +
+                        "1. Review heap usage - may need to increase heap size\n" +
+                        "2. Analyze GC logs for collection patterns\n" +
+                        "3. Check for memory leaks with heap dumps\n" +
+                        "4. Profile object allocation hotspots\n" +
+                        "5. Consider tuning GC algorithm (G1GC, ZGC, etc.)\n" +
+                        "6. If >50%% time in GC, application performance is severely impacted",
+                gcTimePercent,
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())
+        );
+
+        sendEmail(subject, body);
+    }
+
+    public static void sendMetaspaceAlert(String metaspaceUsage, double threshold) {
+        if(!isSendAlertEmail || !isConfigured)
+            return;
+
+        String subject = String.format("WARNING: High Metaspace Usage - %s%%", metaspaceUsage);
+        String body = String.format(
+                "Warning: JVM Metaspace usage has exceeded the threshold.\n\n" +
+                        "Details:\n" +
+                        "- Current Metaspace usage: %s%%\n" +
+                        "- Threshold: %.0f%%\n" +
+                        "- Timestamp: %s\n\n" +
+                        "High Metaspace usage may indicate:\n" +
+                        "- Classloader leaks (classes/classloaders not being garbage collected)\n" +
+                        "- Excessive dynamic class generation (proxies, reflection)\n" +
+                        "- Too many classes loaded\n" +
+                        "- Insufficient Metaspace size allocation\n\n" +
+                        "Recommended actions:\n" +
+                        "1. Check for classloader leaks (common in app servers with redeployments)\n" +
+                        "2. Review dynamic proxy usage and code generation libraries\n" +
+                        "3. Analyze loaded classes with jcmd or visualvm\n" +
+                        "4. Consider increasing -XX:MaxMetaspaceSize if legitimate usage\n" +
+                        "5. If continuously growing, indicates a classloader leak\n" +
+                        "6. Review hot deployment/redeployment strategies",
+                metaspaceUsage,
+                threshold * 100,
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())
+        );
+
+        sendEmail(subject, body);
+    }
+
+    public static void sendClassLoadRateAlert(double classLoadRate, int threshold) {
+        if(!isSendAlertEmail || !isConfigured)
+            return;
+
+        String subject = String.format("WARNING: High Class Loading Rate - %.0f classes/min", classLoadRate);
+        String body = String.format(
+                "Warning: JVM is loading classes at an unusually high rate.\n\n" +
+                        "Details:\n" +
+                        "- Current load rate: %.1f classes/minute\n" +
+                        "- Threshold: %d classes/minute\n" +
+                        "- Timestamp: %s\n\n" +
+                        "High class loading rate may indicate:\n" +
+                        "- Classloader leak (creating new classloaders repeatedly)\n" +
+                        "- Excessive dynamic class generation\n" +
+                        "- Plugin or module loading issues\n" +
+                        "- Hot deployment problems\n\n" +
+                        "Recommended actions:\n" +
+                        "1. Check for classloader leaks in application server\n" +
+                        "2. Review dynamic proxy and bytecode generation usage\n" +
+                        "3. Monitor Metaspace growth alongside class loading\n" +
+                        "4. Investigate reflection-heavy code paths\n" +
+                        "5. Review hot deployment/redeployment configurations",
+                classLoadRate,
+                threshold,
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())
+        );
+
+        sendEmail(subject, body);
     }
 
     private static void sendEmail(String subject, String body) {
@@ -123,5 +298,4 @@ public class EmailUtils {
         }
         return session;
     }
-
 }

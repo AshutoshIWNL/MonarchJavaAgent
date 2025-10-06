@@ -1,11 +1,8 @@
 package com.asm.mja.monitor;
 
-import com.asm.mja.logging.TraceFileLogger;
-import com.asm.mja.utils.EmailUtils;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
-import java.util.List;
 
 import static com.asm.mja.utils.EmailUtils.sendHeapUsageAlert;
 
@@ -14,17 +11,14 @@ import static com.asm.mja.utils.EmailUtils.sendHeapUsageAlert;
  * @since 19-04-2024
  */
 
-public class JVMMemoryMonitor implements Runnable {
-
-    private TraceFileLogger logger;
-    private Thread thread = null;
+public class JVMMemoryMonitor extends AbstractMonitor {
 
     private static final double MEMORY_THRESHOLD_PERCENT = 0.9;
-
     private static volatile JVMMemoryMonitor instance = null;
+    private static final long SLEEP_DURATION = 30 * 1000;
 
     private JVMMemoryMonitor() {
-
+        super("monarch-jvmmemory");
     }
 
     public static JVMMemoryMonitor getInstance() {
@@ -38,15 +32,16 @@ public class JVMMemoryMonitor implements Runnable {
         return instance;
     }
 
-    public void setLogger(TraceFileLogger logger) {
-        this.logger = logger;
+    @Override
+    protected String getMonitorName() {
+        return "JVM Memory monitor";
     }
 
     @Override
     public void run() {
+        MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
         while(true) {
             try {
-                MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
                 long used = memoryMXBean.getHeapMemoryUsage().getUsed() / (1024 * 1024);
                 long max = memoryMXBean.getHeapMemoryUsage().getMax() / (1024 * 1024);
                 long committed = memoryMXBean.getHeapMemoryUsage().getCommitted() / (1024 * 1024);
@@ -57,35 +52,12 @@ public class JVMMemoryMonitor implements Runnable {
                     logger.warn("Memory usage exceeds 90% of max heap");
                     sendHeapUsageAlert(String.valueOf(used));
                 }
-                Thread.sleep(5 * 1000L);
+                Thread.sleep(SLEEP_DURATION);
             } catch (InterruptedException e) {
                 break;
             } catch (Exception e) {
                 logger.error("Error in JVM Memory Monitor: " + e.getMessage());
             }
         }
-    }
-
-    public void execute() {
-        if (thread != null && thread.isAlive()) {
-            logger.warn("JVM memory monitor is already running");
-            return;
-        }
-        logger.trace("Starting JVM memory monitor");
-        thread = new Thread(this, "monarch-jvmmemory");
-        thread.setDaemon(true);
-        thread.start();
-    }
-
-    public void shutdown() {
-        if(thread != null) {
-            logger.trace("Shutting down JVM memory monitor");
-            thread.interrupt();
-            thread = null;
-        }
-    }
-
-    public boolean isDown() {
-        return thread == null;
     }
 }

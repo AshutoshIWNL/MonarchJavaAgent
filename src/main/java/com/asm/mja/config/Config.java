@@ -14,30 +14,16 @@ public class Config {
     private boolean printClassLoaderTrace;
     private boolean printJVMHeapUsage;
     private boolean printJVMCpuUsage;
+    private boolean printJVMThreadUsage;
+    private boolean printJVMGCStats;
+    private boolean printJVMClassLoaderStats;
     private boolean printJVMSystemProperties;
     private boolean printEnvironmentVariables;
     private boolean sendAlertEmails;
     private int maxHeapDumps;
     private boolean shouldInstrument;
     private int configRefreshInterval;
-
     private List<String> emailRecipientList;
-
-    public int getConfigRefreshInterval() {
-        return configRefreshInterval;
-    }
-
-    public void setConfigRefreshInterval(int configRefreshInterval) {
-        this.configRefreshInterval = configRefreshInterval;
-    }
-
-    public boolean shouldInstrument() {
-        return shouldInstrument;
-    }
-
-    public void setShouldInstrument(boolean shouldInstrument) {
-        this.shouldInstrument = shouldInstrument;
-    }
 
     public String getTraceFileLocation() {
         return traceFileLocation;
@@ -79,6 +65,30 @@ public class Config {
         this.printJVMCpuUsage = printJVMCpuUsage;
     }
 
+    public boolean isPrintJVMThreadUsage() {
+        return printJVMThreadUsage;
+    }
+
+    public void setPrintJVMThreadUsage(boolean printJVMThreadUsage) {
+        this.printJVMThreadUsage = printJVMThreadUsage;
+    }
+
+    public boolean isPrintJVMGCStats() {
+        return printJVMGCStats;
+    }
+
+    public void setPrintJVMGCStats(boolean printJVMGCStats) {
+        this.printJVMGCStats = printJVMGCStats;
+    }
+
+    public boolean isPrintJVMClassLoaderStats() {
+        return printJVMClassLoaderStats;
+    }
+
+    public void setPrintJVMClassLoaderStats(boolean printJVMClassLoaderStats) {
+        this.printJVMClassLoaderStats = printJVMClassLoaderStats;
+    }
+
     public boolean isPrintJVMSystemProperties() {
         return printJVMSystemProperties;
     }
@@ -95,12 +105,36 @@ public class Config {
         this.printEnvironmentVariables = printEnvironmentVariables;
     }
 
+    public boolean isSendAlertEmails() {
+        return sendAlertEmails;
+    }
+
+    public void setSendAlertEmails(boolean sendAlertEmails) {
+        this.sendAlertEmails = sendAlertEmails;
+    }
+
     public int getMaxHeapDumps() {
         return maxHeapDumps;
     }
 
     public void setMaxHeapDumps(int maxHeapDumps) {
         this.maxHeapDumps = maxHeapDumps;
+    }
+
+    public boolean isShouldInstrument() {
+        return shouldInstrument;
+    }
+
+    public void setShouldInstrument(boolean shouldInstrument) {
+        this.shouldInstrument = shouldInstrument;
+    }
+
+    public int getConfigRefreshInterval() {
+        return configRefreshInterval;
+    }
+
+    public void setConfigRefreshInterval(int configRefreshInterval) {
+        this.configRefreshInterval = configRefreshInterval;
     }
 
     public List<String> getEmailRecipientList() {
@@ -111,15 +145,6 @@ public class Config {
         this.emailRecipientList = emailRecipientList;
     }
 
-
-    public boolean isSendAlertEmails() {
-        return sendAlertEmails;
-    }
-
-    public void setSendAlertEmails(boolean sendAlertEmails) {
-        this.sendAlertEmails = sendAlertEmails;
-    }
-
     @Override
     public String toString() {
         return "Config{" +
@@ -127,6 +152,10 @@ public class Config {
                 ", agentRules=" + agentRules +
                 ", printClassLoaderTrace=" + printClassLoaderTrace +
                 ", printJVMHeapUsage=" + printJVMHeapUsage +
+                ", printJVMCpuUsage=" + printJVMCpuUsage +
+                ", printJVMThreadUsage=" + printJVMThreadUsage +
+                ", printJVMGCStats=" + printJVMGCStats +
+                ", printJVMClassLoaderStats=" + printJVMClassLoaderStats +
                 ", printJVMSystemProperties=" + printJVMSystemProperties +
                 ", printEnvironmentVariables=" + printEnvironmentVariables +
                 ", sendAlertEmails=" + sendAlertEmails +
@@ -136,4 +165,5 @@ public class Config {
                 ", emailRecipientList=" + emailRecipientList +
                 '}';
     }
+
 }

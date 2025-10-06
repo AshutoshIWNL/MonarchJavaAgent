@@ -6,8 +6,7 @@ import com.asm.mja.config.ConfigValidator;
 import com.asm.mja.logging.AgentLogger;
 import com.asm.mja.logging.LogLevel;
 import com.asm.mja.logging.TraceFileLogger;
-import com.asm.mja.monitor.JVMCPUMonitor;
-import com.asm.mja.monitor.JVMMemoryMonitor;
+import com.asm.mja.monitor.*;
 import com.asm.mja.rule.Rule;
 import com.asm.mja.rule.RuleParser;
 import com.asm.mja.transformer.GlobalTransformer;
@@ -272,7 +271,7 @@ public class AgentConfigurator {
             return;
         }
 
-        if(!config.shouldInstrument()) {
+        if(!config.isShouldInstrument()) {
             AgentLogger.warning("ShouldInstrument is set to false, exiting!");
             return;
         }
@@ -302,6 +301,18 @@ public class AgentConfigurator {
 
         if(config.isPrintJVMCpuUsage()) {
             startJVMCpuMonitorThread(traceFileLogger);
+        }
+
+        if(config.isPrintJVMThreadUsage()) {
+            startJVMThreadMonitorThread(traceFileLogger);
+        }
+
+        if(config.isPrintJVMGCStats()) {
+            startJVMGCMonitorThread(traceFileLogger);
+        }
+
+        if(config.isPrintJVMClassLoaderStats()) {
+            startJVMClassLoaderMonitorThread(traceFileLogger);
         }
 
         List<String> rulesString = new ArrayList<>(config.getAgentRules());
@@ -356,6 +367,39 @@ public class AgentConfigurator {
         JVMCPUMonitor jvmcpuMonitor = JVMCPUMonitor.getInstance();
         jvmcpuMonitor.setLogger(traceFileLogger);
         jvmcpuMonitor.execute();
+    }
+
+    /**
+     * Starts the JVM Thread Monitor thread
+     *
+     * @param traceFileLogger  The logger to be used by JVM Monitor
+     */
+    private static void startJVMThreadMonitorThread(TraceFileLogger traceFileLogger) {
+        JVMThreadMonitor jvmThreadMonitor = JVMThreadMonitor.getInstance();
+        jvmThreadMonitor.setLogger(traceFileLogger);
+        jvmThreadMonitor.execute();
+    }
+
+    /**
+     * Starts the JVM GC Monitor thread
+     *
+     * @param traceFileLogger  The logger to be used by JVM Monitor
+     */
+    private static void startJVMGCMonitorThread(TraceFileLogger traceFileLogger) {
+        JVMGCMonitor jvmGCMonitor = JVMGCMonitor.getInstance();
+        jvmGCMonitor.setLogger(traceFileLogger);
+        jvmGCMonitor.execute();
+    }
+
+    /**
+     * Starts the JVM Class Loader Monitor thread
+     *
+     * @param traceFileLogger  The logger to be used by JVM Monitor
+     */
+    private static void startJVMClassLoaderMonitorThread(TraceFileLogger traceFileLogger) {
+        JVMClassLoaderMonitor jvmClassLoaderMonitor = JVMClassLoaderMonitor.getInstance();
+        jvmClassLoaderMonitor.setLogger(traceFileLogger);
+        jvmClassLoaderMonitor.execute();
     }
 
     /**
