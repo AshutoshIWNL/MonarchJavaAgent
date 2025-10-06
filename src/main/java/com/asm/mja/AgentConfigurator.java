@@ -28,7 +28,7 @@ public class AgentConfigurator {
     private final static String DEFAULT_LOG_LEVEL = "INFO";
     private final static String DEFAULT_AGENT_LOG_DIR = System.getProperty("java.io.tmpdir");
     private final static String AGENT_NAME = "Monarch";
-    private final static String VERSION = "1.0";
+    private final static String VERSION = "1.1";
 
 
     /**

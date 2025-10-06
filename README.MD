@@ -13,7 +13,10 @@ MonarchJavaAgent is a powerful Java agent for method monitoring and analysis. It
 - **JVM Options Printing**: Print JVM options of the target application.
 - **JVM Heap Usage Details**: Print JVM heap usage details of the target application.
 - **JVM CPU Usage Details**: Print JVM CPU usage details of the target application.
-- **Alert Emails**: Sends alert emails for high heap/ high CPU usage in the target application. 
+- **JVM GC Stats**: Print JVM Garbage Collection stats including collection count and time.
+- **JVM Thread Stats**: Print JVM thread stats including current thread count and peak thread count.
+- **JVM Classloader Stats**: Print JVM class loading stats including loaded/unloaded classes, class load rate, and Metaspace usage.
+- **Alert Emails**: Sends alert emails for high heap usage, high CPU usage, thread deadlock, high classloading, etc. in the target application. 
 
 ## Agent Arguments
 
@@ -51,7 +54,7 @@ java -Xverify:none -Xbootclasspath/a:/path/to/MonarchJavaAgent.jar -javaagent:/p
 Example command run:
 ```bash 
 C:\Users\ashut\monarch-java-agent\attachScript> .\monarchAgentStart.bat
-Enter path to the agent JAR file: C:\Users\ashut\monarch-java-agent\target\monarch-java-agent-1.0-SNAPSHOT.jar
+Enter path to the agent JAR file: C:\Users\ashut\monarch-java-agent\target\monarch-java-agent-1.1-SNAPSHOT.jar
 Enter path to the agent config file: C:\Users\ashut\monarch-java-agent\sampleConfig\mConfig.yaml
 Enter arguments to pass to the agent: agentLogFileDir=C:\Users\ashut\manualTesting,agentLogLevel=DEBUG,smtpProperties=/path/to/smtpProperties.props
 Enter PID of the target JVM (press Enter to use current JVM): 24300
@@ -85,6 +88,9 @@ printJVMSystemProperties: true
 printEnvironmentVariables: true
 printJVMHeapUsage: true
 printJVMCpuUsage: true
+printJVMThreadUsage: true
+printJVMGCStats: true
+printJVMClassLoaderStats: true
 maxHeapDumps: 3
 sendAlertEmails: true
 emailRecipientList:
