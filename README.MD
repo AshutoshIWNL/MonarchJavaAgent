@@ -31,7 +31,7 @@ MonarchJavaAgent is a powerful Java agent for method monitoring and analysis. It
 
 ## Usage
 
-You can attach Monarch-Java-Agent either during startup or during runtime.
+You can attach MonarchJavaAgent either during startup or during runtime.
 
 **For startup:**
 
@@ -63,7 +63,7 @@ Agent attached successfully to PID 24300
 
 ## Configuration
 
-Below is a sample configuration YAML that you can use with Monarch-Java-Agent:
+Below is a sample configuration YAML that you can use with MonarchJavaAgent:
 
 ```yaml
 shouldInstrument: true
@@ -100,7 +100,7 @@ emailRecipientList:
 
 ## Rule Syntax
 
-The rule syntax for Monarch-Java-Agent follows the format:
+The rule syntax for MonarchJavaAgent follows the format:
 
 ```plaintext
 <FQCN>::<MethodName>@<EVENT>::<ACTION>

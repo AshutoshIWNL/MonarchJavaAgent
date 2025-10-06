@@ -21,6 +21,9 @@ Monarch is a powerful Java agent for method monitoring and analysis. It offers v
 * **Shadow Memory Grasp:** Seize a heap dump at critical moments, capturing the memory landscape.
 * **Shadow System Gaze:** Peer into the system flags and JVM options, understanding the environment.
 * **Shadow Resource Monitoring:** Track heap and CPU usage, ensuring the shadows remain under control.
+* **Shadow Garbage Collector Insight**: Observe the movements of the JVM's GC, tracking collection counts and times to anticipate system pauses.
+* **Shadow Thread Watcher**: Monitor all threads in the JVM, identifying peaks and anomalies like a shadow stalking its prey.
+* **Shadow Classloader Vigil**: Track loaded and unloaded classes, class load rates, and Metaspace usage, preventing rogue shadows from overwhelming the system.
 * **Shadow Alert Sentinels:** Deploy alert emails to notify you of critical resource usage, maintaining vigilance.
 
 ## MonArgs
@@ -36,7 +39,7 @@ Monarch is a powerful Java agent for method monitoring and analysis. It offers v
 
 ## Summoning the Monarch
 
-You can attach Monarch-Java-Agent either during startup or during runtime.
+You can attach MonarchJavaAgent either during startup or during runtime.
 
 **For startup:**
 
@@ -47,7 +50,7 @@ You can attach Monarch-Java-Agent either during startup or during runtime.
 Example command to attach the agent:
 
 ```bash 
-java -Xverify:none -Xbootclasspath/a:/path/to/monarch-java-agent.jar -javaagent:/path/to/monarch-java-agent.jar=configFile=/path/to/config.yaml,agentLogFileDir=/path/to/log/dir,agentLogLevel=DEBUG,smtpProperties=/path/to/smtpProperties.props YourMainClass
+java -Xverify:none -Xbootclasspath/a:/path/to/MonarchJavaAgent-1.1-SNAPSHOT.jar -javaagent:/path/to/MonarchJavaAgent-1.1-SNAPSHOT.jar=configFile=/path/to/config.yaml,agentLogFileDir=/path/to/log/dir,agentLogLevel=DEBUG,smtpProperties=/path/to/smtpProperties.props YourMainClass
 ```
 
 **For Runtime:**
@@ -59,7 +62,7 @@ java -Xverify:none -Xbootclasspath/a:/path/to/monarch-java-agent.jar -javaagent:
 Example command run:
 ```bash 
 C:\Users\ashut\monarch-java-agent\attachScript> .\monarchAgentStart.bat
-Enter path to the agent JAR file: C:\Users\ashut\monarch-java-agent\target\monarch-java-agent-1.1-SNAPSHOT.jar
+Enter path to the agent JAR file: C:\Users\ashut\monarch-java-agent\target\MonarchJavaAgent-1.1-SNAPSHOT.jar
 Enter path to the agent config file: C:\Users\ashut\monarch-java-agent\sampleConfig\mConfig.yaml
 Enter arguments to pass to the agent: agentLogFileDir=C:\Users\ashut\manualTesting,agentLogLevel=DEBUG,smtpProperties=/path/to/smtpProperties.props
 Enter PID of the target JVM (press Enter to use current JVM): 24300
@@ -68,7 +71,7 @@ Agent attached successfully to PID 24300
 
 ## Commanding the Shadows
 
-Below is a sample configuration YAML that you can use with Monarch-Java-Agent:
+Below is a sample configuration YAML that you can use with MonarchJavaAgent:
 
 ```yaml
 shouldInstrument: true
@@ -102,7 +105,7 @@ emailRecipientList:
 
 ## The Monarch's Decrees
 
-The rule syntax for Monarch-Java-Agent follows the format:
+The rule syntax for MonarchJavaAgent follows the format:
 
 ```plaintext
 <FQCN>::<MethodName>@<EVENT>::<ACTION>

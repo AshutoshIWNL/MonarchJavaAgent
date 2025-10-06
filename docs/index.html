@@ -20,6 +20,9 @@
   <li><strong>Shadow Memory Grasp:</strong> Seize a heap dump at critical moments, capturing the memory landscape.</li>
   <li><strong>Shadow System Gaze:</strong> Peer into the system flags and JVM options, understanding the environment.</li>
   <li><strong>Shadow Resource Monitoring:</strong> Track heap and CPU usage, ensuring the shadows remain under control.</li>
+  <li><strong>Shadow Garbage Collector Insight</strong>: Observe the movements of the JVM’s GC, tracking collection counts and times to anticipate system pauses.</li>
+  <li><strong>Shadow Thread Watcher</strong>: Monitor all threads in the JVM, identifying peaks and anomalies like a shadow stalking its prey.</li>
+  <li><strong>Shadow Classloader Vigil</strong>: Track loaded and unloaded classes, class load rates, and Metaspace usage, preventing rogue shadows from overwhelming the system.</li>
   <li><strong>Shadow Alert Sentinels:</strong> Deploy alert emails to notify you of critical resource usage, maintaining vigilance.</li>
 </ul>
 
@@ -58,7 +61,7 @@
 
 <h2 id="summoning-the-monarch">Summoning the Monarch</h2>
 
-<p>You can attach Monarch-Java-Agent either during startup or during runtime.</p>
+<p>You can attach MonarchJavaAgent either during startup or during runtime.</p>
 
 <p><strong>For startup:</strong></p>
 
@@ -70,7 +73,7 @@
 
 <p>Example command to attach the agent:</p>
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>java <span class="nt">-Xverify</span>:none <span class="nt">-Xbootclasspath</span>/a:/path/to/monarch-java-agent.jar <span class="nt">-javaagent</span>:/path/to/monarch-java-agent.jar<span class="o">=</span><span class="nv">configFile</span><span class="o">=</span>/path/to/config.yaml,agentLogFileDir<span class="o">=</span>/path/to/log/dir,agentLogLevel<span class="o">=</span>DEBUG,smtpProperties<span class="o">=</span>/path/to/smtpProperties.props YourMainClass
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>java <span class="nt">-Xverify</span>:none <span class="nt">-Xbootclasspath</span>/a:/path/to/MonarchJavaAgent-1.1-SNAPSHOT.jar <span class="nt">-javaagent</span>:/path/to/MonarchJavaAgent-1.1-SNAPSHOT.jar<span class="o">=</span><span class="nv">configFile</span><span class="o">=</span>/path/to/config.yaml,agentLogFileDir<span class="o">=</span>/path/to/log/dir,agentLogLevel<span class="o">=</span>DEBUG,smtpProperties<span class="o">=</span>/path/to/smtpProperties.props YourMainClass
 </code></pre></div></div>
 
 <p><strong>For Runtime:</strong></p>
@@ -83,7 +86,7 @@
 
 <p>Example command run:</p>
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>C:<span class="se">\U</span>sers<span class="se">\a</span>shut<span class="se">\m</span>onarch-java-agent<span class="se">\a</span>ttachScript&gt; .<span class="se">\m</span>onarchAgentStart.bat
-Enter path to the agent JAR file: C:<span class="se">\U</span>sers<span class="se">\a</span>shut<span class="se">\m</span>onarch-java-agent<span class="se">\t</span>arget<span class="se">\m</span>onarch-java-agent-1.1-SNAPSHOT.jar
+Enter path to the agent JAR file: C:<span class="se">\U</span>sers<span class="se">\a</span>shut<span class="se">\m</span>onarch-java-agent<span class="se">\t</span>arget<span class="se">\M</span>onarchJavaAgent-1.1-SNAPSHOT.jar
 Enter path to the agent config file: C:<span class="se">\U</span>sers<span class="se">\a</span>shut<span class="se">\m</span>onarch-java-agent<span class="se">\s</span>ampleConfig<span class="se">\m</span>Config.yaml
 Enter arguments to pass to the agent: <span class="nv">agentLogFileDir</span><span class="o">=</span>C:<span class="se">\U</span>sers<span class="se">\a</span>shut<span class="se">\m</span>anualTesting,agentLogLevel<span class="o">=</span>DEBUG,smtpProperties<span class="o">=</span>/path/to/smtpProperties.props
 Enter PID of the target JVM <span class="o">(</span>press Enter to use current JVM<span class="o">)</span>: 24300
@@ -92,7 +95,7 @@ Agent attached successfully to PID 24300
 
 <h2 id="commanding-the-shadows">Commanding the Shadows</h2>
 
-<p>Below is a sample configuration YAML that you can use with Monarch-Java-Agent:</p>
+<p>Below is a sample configuration YAML that you can use with MonarchJavaAgent:</p>
 
 <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">shouldInstrument</span><span class="pi">:</span> <span class="kc">true</span>
 <span class="na">configRefreshInterval</span><span class="pi">:</span> <span class="m">15</span>
@@ -125,7 +128,7 @@ Agent attached successfully to PID 24300
 
 <h2 id="the-monarchs-decrees">The Monarch’s Decrees</h2>
 
-<p>The rule syntax for Monarch-Java-Agent follows the format:</p>
+<p>The rule syntax for MonarchJavaAgent follows the format:</p>
 
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;FQCN&gt;::&lt;MethodName&gt;@&lt;EVENT&gt;::&lt;ACTION&gt;
 </code></pre></div></div>
