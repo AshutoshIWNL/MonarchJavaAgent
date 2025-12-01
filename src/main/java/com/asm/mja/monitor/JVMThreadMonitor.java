@@ -1,5 +1,6 @@
 package com.asm.mja.monitor;
 
+import com.asm.mja.metrics.MetricsSnapshot;
 import com.asm.mja.utils.EmailUtils;
 
 import java.lang.management.ManagementFactory;
@@ -60,6 +61,16 @@ public class JVMThreadMonitor extends AbstractMonitor {
                 if (threadCount > THREAD_THRESHOLD) {
                     logger.warn("Thread count exceeds threshold: " + threadCount);
                     EmailUtils.sendThreadCountAlert(threadCount);
+                }
+
+                if (isExposeMetrics) {
+                    MetricsSnapshot.getInstance().updateThreadMetrics(
+                            threadCount,
+                            peakThreadCount,
+                            daemonThreadCount,
+                            threadBean.getTotalStartedThreadCount(),
+                            deadlockedThreads != null ? deadlockedThreads.length : 0
+                    );
                 }
 
                 Thread.sleep(SLEEP_DURATION);

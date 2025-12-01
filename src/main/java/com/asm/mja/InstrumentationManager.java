@@ -2,10 +2,11 @@ package com.asm.mja;
 
 import com.asm.mja.config.Config;
 import com.asm.mja.config.ConfigParser;
+import com.asm.mja.metrics.MetricsHttpServer;
+import com.asm.mja.monitor.*;
 import com.asm.mja.rule.Rule;
 import com.asm.mja.rule.RuleParser;
 import com.asm.mja.logging.TraceFileLogger;
-import com.asm.mja.monitor.JVMMemoryMonitor;
 import com.asm.mja.transformer.GlobalTransformer;
 import com.asm.mja.utils.ByteCodeUtils;
 import com.asm.mja.utils.ClassRuleUtils;
@@ -37,6 +38,16 @@ public class InstrumentationManager implements Runnable {
     private List<Rule> currentRules;
 
     private JVMMemoryMonitor jvmMemoryMonitor;
+
+    private JVMCPUMonitor jvmCpuMonitor;
+
+    private JVMGCMonitor jvmGcMonitor;
+
+    private JVMThreadMonitor jvmThreadMonitor;
+
+    private JVMClassLoaderMonitor jvmClassLoaderMonitor;
+
+    private Config initialConfig;
 
     private static InstrumentationManager instance = null;
     private GlobalTransformer transformer;
@@ -76,15 +87,13 @@ public class InstrumentationManager implements Runnable {
         this.transformer = transformer;
     }
 
-    public void setJvmMemoryMonitor(JVMMemoryMonitor jvmMemoryMonitor) {
-        this.jvmMemoryMonitor = jvmMemoryMonitor;
-    }
-
     public void setCurrentRules(List<Rule> currentRules) {
         this.currentRules = currentRules;
     }
 
     public void setConfigRefreshInterval(Long configRefreshInterval) {this.configRefreshInterval = configRefreshInterval; }
+
+    public void setInitialConfig(Config config) {this.initialConfig = config;}
 
     @Override
     public void run() {
@@ -98,6 +107,7 @@ public class InstrumentationManager implements Runnable {
                     config = ConfigParser.parse(configFilePath, logger);
                     configRefreshInterval = config.getConfigRefreshInterval();
                     logger.trace("Configuration file has been modified, re-parsing it");
+                    startOrStopMonitors(config);
                     handleConfigurationChange(config);
                     lastModified = currentLastModified;
                 } catch (IOException e) {
@@ -207,19 +217,121 @@ public class InstrumentationManager implements Runnable {
 
     public void execute() {
         logger.trace("Starting Monarch Instrumentation Manager");
+        startOrStopMonitors(initialConfig);
         thread = new Thread(this, "monarch-inst-manager");
         thread.setDaemon(true);
         thread.start();
     }
 
     public void shutdown() {
-        if(jvmMemoryMonitor != null) {
-            jvmMemoryMonitor.shutdown();
-        }
-        if(thread != null) {
-            logger.trace("Shutting down Monarch Instrumentation Manager");
+
+        if (jvmMemoryMonitor != null) jvmMemoryMonitor.shutdown();
+        if (jvmCpuMonitor != null) jvmCpuMonitor.shutdown();
+        if (jvmGcMonitor != null) jvmGcMonitor.shutdown();
+        if (jvmThreadMonitor != null) jvmThreadMonitor.shutdown();
+        if (jvmClassLoaderMonitor != null) jvmClassLoaderMonitor.shutdown();
+
+        if (thread != null) {
             thread.interrupt();
         }
+
         logger.close();
     }
+
+
+    private void startOrStopMonitors(Config config) {
+        if (config == null) return;
+
+        if (config.isExposeMetrics()) {
+            MetricsHttpServer.getInstance().start(config.getMetricsPort());
+        } else {
+            MetricsHttpServer.getInstance().stop();
+        }
+
+        if (config.isPrintJVMHeapUsage()) {
+            if (jvmMemoryMonitor == null || jvmMemoryMonitor.isDown()) {
+                jvmMemoryMonitor = JVMMemoryMonitor.getInstance();
+                jvmMemoryMonitor.setLogger(logger);
+                jvmMemoryMonitor.execute();
+            }
+
+            if(jvmMemoryMonitor != null)
+                jvmMemoryMonitor.setExposeMetrics(config.isExposeMetrics());
+
+        } else {
+            if (jvmMemoryMonitor != null && !jvmMemoryMonitor.isDown()) {
+                jvmMemoryMonitor.shutdown();
+                jvmMemoryMonitor = null;
+            }
+        }
+
+        if (config.isPrintJVMCpuUsage()) {
+            if (jvmCpuMonitor == null || jvmCpuMonitor.isDown()) {
+                jvmCpuMonitor = JVMCPUMonitor.getInstance();
+                jvmCpuMonitor.setLogger(logger);
+                jvmCpuMonitor.execute();
+            }
+
+            if(jvmCpuMonitor != null)
+                jvmCpuMonitor.setExposeMetrics(config.isExposeMetrics());
+
+        } else {
+            if (jvmCpuMonitor != null && !jvmCpuMonitor.isDown()) {
+                jvmCpuMonitor.shutdown();
+                jvmCpuMonitor = null;
+            }
+        }
+
+        if (config.isPrintJVMGCStats()) {
+            if (jvmGcMonitor == null || jvmGcMonitor.isDown()) {
+                jvmGcMonitor = JVMGCMonitor.getInstance();
+                jvmGcMonitor.setLogger(logger);
+                jvmGcMonitor.execute();
+            }
+
+            if(jvmGcMonitor != null)
+                jvmGcMonitor.setExposeMetrics(config.isExposeMetrics());
+
+        } else {
+            if (jvmGcMonitor != null && !jvmGcMonitor.isDown()) {
+                jvmGcMonitor.shutdown();
+                jvmGcMonitor = null;
+            }
+        }
+
+        if (config.isPrintJVMThreadUsage()) {
+            if (jvmThreadMonitor == null || jvmThreadMonitor.isDown()) {
+                jvmThreadMonitor = JVMThreadMonitor.getInstance();
+                jvmThreadMonitor.setLogger(logger);
+                jvmThreadMonitor.execute();
+            }
+
+            if(jvmThreadMonitor != null)
+                jvmThreadMonitor.setExposeMetrics(config.isExposeMetrics());
+
+        } else {
+            if (jvmThreadMonitor != null && !jvmThreadMonitor.isDown()) {
+                jvmThreadMonitor.shutdown();
+                jvmThreadMonitor = null;
+            }
+        }
+
+        if (config.isPrintJVMClassLoaderStats()) {
+            if (jvmClassLoaderMonitor == null || jvmClassLoaderMonitor.isDown()) {
+                jvmClassLoaderMonitor = JVMClassLoaderMonitor.getInstance();
+                jvmClassLoaderMonitor.setLogger(logger);
+                jvmClassLoaderMonitor.execute();
+            }
+
+            if (jvmClassLoaderMonitor != null)
+                jvmClassLoaderMonitor.setExposeMetrics(config.isExposeMetrics());
+
+        } else {
+            if (jvmClassLoaderMonitor != null && !jvmClassLoaderMonitor.isDown()) {
+                jvmClassLoaderMonitor.shutdown();
+                jvmClassLoaderMonitor = null;
+            }
+        }
+    }
+
 }

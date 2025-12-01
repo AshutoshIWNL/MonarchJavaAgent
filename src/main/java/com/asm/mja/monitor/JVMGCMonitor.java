@@ -1,5 +1,6 @@
 package com.asm.mja.monitor;
 
+import com.asm.mja.metrics.MetricsSnapshot;
 import com.asm.mja.utils.EmailUtils;
 
 import java.lang.management.GarbageCollectorMXBean;
@@ -43,6 +44,7 @@ public class JVMGCMonitor extends AbstractMonitor {
         return "JVM GC monitor";
     }
 
+
     @Override
     public void run() {
         List<GarbageCollectorMXBean> gcBeans = ManagementFactory.getGarbageCollectorMXBeans();
@@ -71,13 +73,22 @@ public class JVMGCMonitor extends AbstractMonitor {
 
                     totalGCTime += timeDiff;
 
+                    if (isExposeMetrics) {
+                        MetricsSnapshot.getInstance().updateGCMetrics(
+                                gcName,
+                                countDiff,
+                                timeDiff,
+                                (double) timeDiff * 100.0 / elapsedTime
+                        );
+                    }
+
                     previousGCCount.put(gcName, gcCount);
                     previousGCTime.put(gcName, gcTime);
                 }
 
                 logger.trace(gcStats.toString());
 
-                // Calculate percentage of time spent in GC
+                // alert logic for total GC %
                 double gcTimePercent = (totalGCTime * 100.0) / elapsedTime;
                 if (gcTimePercent > GC_TIME_THRESHOLD_PERCENT) {
                     logger.warn(String.format("High GC activity: %.2f%% time spent in GC", gcTimePercent));
@@ -85,6 +96,7 @@ public class JVMGCMonitor extends AbstractMonitor {
                 }
 
                 previousCheckTime = currentTime;
+
                 Thread.sleep(SLEEP_DURATION);
             } catch (InterruptedException e) {
                 break;
@@ -93,4 +105,5 @@ public class JVMGCMonitor extends AbstractMonitor {
             }
         }
     }
+
 }

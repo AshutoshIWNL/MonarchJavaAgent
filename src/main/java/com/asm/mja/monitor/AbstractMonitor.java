@@ -11,6 +11,7 @@ public abstract class AbstractMonitor implements Runnable {
     protected TraceFileLogger logger;
     protected Thread thread = null;
     protected final String threadName;
+    protected volatile boolean isExposeMetrics;
 
     protected AbstractMonitor(String threadName) {
         this.threadName = threadName;
@@ -18,6 +19,10 @@ public abstract class AbstractMonitor implements Runnable {
 
     public void setLogger(TraceFileLogger logger) {
         this.logger = logger;
+    }
+
+    public void setExposeMetrics(boolean isExposeMetrics) {
+        this.isExposeMetrics = isExposeMetrics;
     }
 
     public void execute() {

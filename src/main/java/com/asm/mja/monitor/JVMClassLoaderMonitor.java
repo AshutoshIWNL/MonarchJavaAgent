@@ -1,5 +1,6 @@
 package com.asm.mja.monitor;
 
+import com.asm.mja.metrics.MetricsSnapshot;
 import com.asm.mja.utils.EmailUtils;
 
 import java.lang.management.ClassLoadingMXBean;
@@ -118,6 +119,14 @@ public class JVMClassLoaderMonitor extends AbstractMonitor {
 
                 previousLoadedClassCount = totalLoadedClassCount;
                 previousCheckTime = currentTime;
+
+                if (isExposeMetrics) {
+                    MetricsSnapshot.getInstance().updateClassLoaderMetrics(
+                            loadedClassCount,
+                            totalLoadedClassCount,
+                            unloadedClassCount
+                    );
+                }
 
                 Thread.sleep(SLEEP_DURATION);
 

@@ -295,26 +295,6 @@ public class AgentConfigurator {
             traceFileLogger.trace(JVMUtils.getEnvVars());
         }
 
-        if(config.isPrintJVMHeapUsage()) {
-            startJVMMemoryMonitorThread(traceFileLogger);
-        }
-
-        if(config.isPrintJVMCpuUsage()) {
-            startJVMCpuMonitorThread(traceFileLogger);
-        }
-
-        if(config.isPrintJVMThreadUsage()) {
-            startJVMThreadMonitorThread(traceFileLogger);
-        }
-
-        if(config.isPrintJVMGCStats()) {
-            startJVMGCMonitorThread(traceFileLogger);
-        }
-
-        if(config.isPrintJVMClassLoaderStats()) {
-            startJVMClassLoaderMonitorThread(traceFileLogger);
-        }
-
         List<String> rulesString = new ArrayList<>(config.getAgentRules());
         List<Rule> rules = RuleParser.parseRules(rulesString);
         GlobalTransformer globalTransformer = new GlobalTransformer(config, traceFileLogger, rules, launchType, agentAbsolutePath);
@@ -339,78 +319,15 @@ public class AgentConfigurator {
         }
         AgentLogger.info("Registered transformer - " + GlobalTransformer.class);
 
-        startInstrumentationManager(inst, configFile, globalTransformer, traceFileLogger, rules, config.getConfigRefreshInterval());
+        startInstrumentationManager(inst, configFile, globalTransformer, traceFileLogger, rules, config);
 
         AgentLogger.debug("Setting up shutdown hook to close resources");
-        Thread shutdownHook = new Thread(() -> {
-            JVMMemoryMonitor jvmMemoryMonitor = JVMMemoryMonitor.getInstance();
-            if(!jvmMemoryMonitor.isDown())
-                JVMMemoryMonitor.getInstance().shutdown();
-            JVMCPUMonitor jvmcpuMonitor = JVMCPUMonitor.getInstance();
-            if(!jvmcpuMonitor.isDown())
-                JVMCPUMonitor.getInstance().shutdown();
-            traceFileLogger.close();
-        });
+        Thread shutdownHook = new Thread(traceFileLogger::close);
         shutdownHook.setName("monarch-shutdown-hook");
         Runtime.getRuntime().addShutdownHook(shutdownHook);
 
 
         AgentLogger.deinit();
-    }
-
-    /**
-     * Starts the JVM CPU Monitor thread
-     *
-     * @param traceFileLogger  The logger to be used by JVM Monitor
-     */
-    private static void startJVMCpuMonitorThread(TraceFileLogger traceFileLogger) {
-        JVMCPUMonitor jvmcpuMonitor = JVMCPUMonitor.getInstance();
-        jvmcpuMonitor.setLogger(traceFileLogger);
-        jvmcpuMonitor.execute();
-    }
-
-    /**
-     * Starts the JVM Thread Monitor thread
-     *
-     * @param traceFileLogger  The logger to be used by JVM Monitor
-     */
-    private static void startJVMThreadMonitorThread(TraceFileLogger traceFileLogger) {
-        JVMThreadMonitor jvmThreadMonitor = JVMThreadMonitor.getInstance();
-        jvmThreadMonitor.setLogger(traceFileLogger);
-        jvmThreadMonitor.execute();
-    }
-
-    /**
-     * Starts the JVM GC Monitor thread
-     *
-     * @param traceFileLogger  The logger to be used by JVM Monitor
-     */
-    private static void startJVMGCMonitorThread(TraceFileLogger traceFileLogger) {
-        JVMGCMonitor jvmGCMonitor = JVMGCMonitor.getInstance();
-        jvmGCMonitor.setLogger(traceFileLogger);
-        jvmGCMonitor.execute();
-    }
-
-    /**
-     * Starts the JVM Class Loader Monitor thread
-     *
-     * @param traceFileLogger  The logger to be used by JVM Monitor
-     */
-    private static void startJVMClassLoaderMonitorThread(TraceFileLogger traceFileLogger) {
-        JVMClassLoaderMonitor jvmClassLoaderMonitor = JVMClassLoaderMonitor.getInstance();
-        jvmClassLoaderMonitor.setLogger(traceFileLogger);
-        jvmClassLoaderMonitor.execute();
-    }
-
-    /**
-     * Starts the JVM Memory Monitor thread
-     *
-     * @param traceFileLogger  The logger to be used by JVM Monitor
-     */
-    private static void startJVMMemoryMonitorThread(TraceFileLogger traceFileLogger) {
-        JVMMemoryMonitor jvmMemoryMonitor = JVMMemoryMonitor.getInstance();
-        jvmMemoryMonitor.setLogger(traceFileLogger);
-        jvmMemoryMonitor.execute();
     }
 
     /**
@@ -420,20 +337,20 @@ public class AgentConfigurator {
      * @param configFile          The path to the configuration file for the Instrumentation Manager.
      * @param globalTransformer   The GlobalTransformer instance that will manage bytecode transformations.
      * @param traceFileLogger     The logger responsible for tracing file operations and instrumentation logs.
-     * @param rules             The list of rules to apply during instrumentation.
-     * @param configRefreshInterval The interval (in milliseconds) at which the configuration file is checked for updates.
+     * @param rules               The list of rules to apply during instrumentation.
+     * @param config              The config object
      */
     private static void startInstrumentationManager(Instrumentation inst, String configFile, GlobalTransformer globalTransformer,
-                                                    TraceFileLogger traceFileLogger, List<Rule> rules, long configRefreshInterval) {
+                                                    TraceFileLogger traceFileLogger, List<Rule> rules, Config config) {
         InstrumentationManager instrumentationManager = InstrumentationManager.getInstance();
         instrumentationManager.setInstrumentation(inst);
         instrumentationManager.setConfigFilePath(configFile);
-        instrumentationManager.setJvmMemoryMonitor(JVMMemoryMonitor.getInstance());
+        instrumentationManager.setInitialConfig(config);
         instrumentationManager.setTransformer(globalTransformer);
         instrumentationManager.setCurrentRules(rules);
         instrumentationManager.setLastModified(new File(configFile).lastModified());
         instrumentationManager.setLogger(traceFileLogger);
-        instrumentationManager.setConfigRefreshInterval(configRefreshInterval);
+        instrumentationManager.setConfigRefreshInterval((long) config.getConfigRefreshInterval());
         instrumentationManager.execute();
     }
 

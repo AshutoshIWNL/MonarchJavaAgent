@@ -23,6 +23,8 @@ printJVMCpuUsage: true
 printJVMThreadUsage: true
 printJVMGCStats: true
 printJVMClassLoaderStats: true
+exposeMetrics: true
+metricsPort: 9090
 maxHeapDumps: 3
 sendAlertEmails: true
 emailRecipientList:

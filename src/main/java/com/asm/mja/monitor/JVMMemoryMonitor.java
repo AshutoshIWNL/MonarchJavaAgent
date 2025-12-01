@@ -1,6 +1,8 @@
 package com.asm.mja.monitor;
 
 
+import com.asm.mja.metrics.MetricsSnapshot;
+
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 
@@ -52,6 +54,17 @@ public class JVMMemoryMonitor extends AbstractMonitor {
                     logger.warn("Memory usage exceeds 90% of max heap");
                     sendHeapUsageAlert(String.valueOf(used));
                 }
+
+                if (isExposeMetrics) {
+                    MetricsSnapshot.getInstance().updateHeapMetrics(
+                            used,
+                            max,
+                            committed,
+                            ((double) used /max) * 100,
+                            ((double) used /committed) * 100
+                    );
+                }
+
                 Thread.sleep(SLEEP_DURATION);
             } catch (InterruptedException e) {
                 break;

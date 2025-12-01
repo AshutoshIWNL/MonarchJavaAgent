@@ -19,6 +19,8 @@ public class Config {
     private boolean printJVMClassLoaderStats;
     private boolean printJVMSystemProperties;
     private boolean printEnvironmentVariables;
+    private boolean exposeMetrics;
+    private int metricsPort;
     private boolean sendAlertEmails;
     private int maxHeapDumps;
     private boolean shouldInstrument;
@@ -145,6 +147,22 @@ public class Config {
         this.emailRecipientList = emailRecipientList;
     }
 
+    public boolean isExposeMetrics() {
+        return exposeMetrics;
+    }
+
+    public void setExposeMetrics(boolean exposeMetrics) {
+        this.exposeMetrics = exposeMetrics;
+    }
+
+    public int getMetricsPort() {
+        return metricsPort;
+    }
+
+    public void setMetricsPort(int metricsPort) {
+        this.metricsPort = metricsPort;
+    }
+
     @Override
     public String toString() {
         return "Config{" +
@@ -158,6 +176,8 @@ public class Config {
                 ", printJVMClassLoaderStats=" + printJVMClassLoaderStats +
                 ", printJVMSystemProperties=" + printJVMSystemProperties +
                 ", printEnvironmentVariables=" + printEnvironmentVariables +
+                ", exposeMetrics=" + exposeMetrics +
+                ", metricsPort=" + metricsPort +
                 ", sendAlertEmails=" + sendAlertEmails +
                 ", maxHeapDumps=" + maxHeapDumps +
                 ", shouldInstrument=" + shouldInstrument +

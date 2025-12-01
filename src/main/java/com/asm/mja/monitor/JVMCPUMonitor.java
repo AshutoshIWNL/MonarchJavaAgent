@@ -1,5 +1,6 @@
 package com.asm.mja.monitor;
 
+import com.asm.mja.metrics.MetricsSnapshot;
 import com.asm.mja.utils.EmailUtils;
 
 import java.lang.management.ManagementFactory;
@@ -55,6 +56,14 @@ public class JVMCPUMonitor extends AbstractMonitor  {
                 if (processCpuLoadPercent > CPU_THRESHOLD_PERCENT * 100) {
                     logger.warn("JVM CPU usage exceeds " + (CPU_THRESHOLD_PERCENT * 100) + "%");
                     EmailUtils.sendCPULoadAlert(cpuLoadPercent);
+                }
+
+                if (isExposeMetrics) {
+                    MetricsSnapshot.getInstance().updateCPUMetrics(
+                            processCpuLoadPercent,
+                            osBean.getSystemCpuLoad() * 100,
+                            osBean.getAvailableProcessors()
+                    );
                 }
 
                 Thread.sleep(SLEEP_DURATION);
