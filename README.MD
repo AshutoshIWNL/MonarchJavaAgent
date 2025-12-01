@@ -16,6 +16,7 @@ MonarchJavaAgent is a powerful Java agent for method monitoring and analysis. It
 - **JVM GC Stats**: Print JVM Garbage Collection stats including collection count and time.
 - **JVM Thread Stats**: Print JVM thread stats including current thread count and peak thread count.
 - **JVM Classloader Stats**: Print JVM class loading stats including loaded/unloaded classes, class load rate, and Metaspace usage.
+- **Metrics HTTP Endpoint**: Exposes JVM metrics (heap, GC, threads, CPU, classloader) via a built-in `/metrics` HTTP endpoint. Useful for dashboards and monitoring tools. Prometheus-compatible format coming in the next release.
 - **Alert Emails**: Sends alert emails for high heap usage, high CPU usage, thread deadlock, high classloading, etc. in the target application. 
 
 ## Agent Arguments
@@ -91,6 +92,8 @@ printJVMCpuUsage: true
 printJVMThreadUsage: true
 printJVMGCStats: true
 printJVMClassLoaderStats: true
+exposeMetrics: true
+metricsPort: 9090
 maxHeapDumps: 3
 sendAlertEmails: true
 emailRecipientList:
@@ -122,6 +125,23 @@ Where:
     - RET: Log method return value.
     - ADD: Add custom code.
 
+## Metrics Endpoint
+
+If `exposeMetrics: true` is enabled in the config, MonarchJavaAgent starts a lightweight HTTP server exposing JVM metrics.
+
+Default endpoint:
+http://localhost:9090/metrics
+
+Returns JSON containing:
+
+- Heap usage
+- CPU load
+- GC stats
+- Thread stats
+- Classloader stats
+- Agent info + timestamp
+
+Prometheus `/metrics` format support is planned for the next release.
 
 ## Building from Source
 

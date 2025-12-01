@@ -23,6 +23,7 @@
   <li><strong>Shadow Garbage Collector Insight</strong>: Observe the movements of the JVM’s GC, tracking collection counts and times to anticipate system pauses.</li>
   <li><strong>Shadow Thread Watcher</strong>: Monitor all threads in the JVM, identifying peaks and anomalies like a shadow stalking its prey.</li>
   <li><strong>Shadow Classloader Vigil</strong>: Track loaded and unloaded classes, class load rates, and Metaspace usage, preventing rogue shadows from overwhelming the system.</li>
+  <li><strong>Shadow Metrics Divination:</strong> Channel live JVM vitals — heap, CPU, GC, threads, and classloaders — through a built-in <code class="language-plaintext highlighter-rouge">/metrics</code> endpoint. Prometheus prophecy arriving soon.</li>
   <li><strong>Shadow Alert Sentinels:</strong> Deploy alert emails to notify you of critical resource usage, maintaining vigilance.</li>
 </ul>
 
@@ -156,6 +157,27 @@ Agent attached successfully to PID 24300
     </ul>
   </li>
 </ul>
+
+<h2 id="shadow-metrics-gate">Shadow Metrics Gate</h2>
+
+<p>If <code class="language-plaintext highlighter-rouge">exposeMetrics: true</code> is declared in your scroll of configuration,
+MonarchJavaAgent summons a spectral gateway — a lightweight HTTP server that exposes the heartbeat of your JVM in real time.</p>
+
+<p>Default Rift:
+http://localhost:9090/metrics</p>
+
+<p>Through this rift, the agent unveils:</p>
+
+<ul>
+  <li>Heap usage</li>
+  <li>CPU load</li>
+  <li>GC stats</li>
+  <li>Thread stats</li>
+  <li>Classloader stats</li>
+  <li>Agent info + timestamp</li>
+</ul>
+
+<p>Soon, in the next ascension, the agent will unlock Prometheus-tier incantations — <code class="language-plaintext highlighter-rouge">/metrics</code> in true Prometheus format, granting interoperability with realms of dashboards and sentinels.</p>
 
 <h2 id="forging-the-shadow">Forging the Shadow</h2>
 

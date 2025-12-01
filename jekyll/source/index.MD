@@ -24,6 +24,7 @@ Monarch is a powerful Java agent for method monitoring and analysis. It offers v
 * **Shadow Garbage Collector Insight**: Observe the movements of the JVM's GC, tracking collection counts and times to anticipate system pauses.
 * **Shadow Thread Watcher**: Monitor all threads in the JVM, identifying peaks and anomalies like a shadow stalking its prey.
 * **Shadow Classloader Vigil**: Track loaded and unloaded classes, class load rates, and Metaspace usage, preventing rogue shadows from overwhelming the system.
+* **Shadow Metrics Divination:** Channel live JVM vitals — heap, CPU, GC, threads, and classloaders — through a built-in `/metrics` endpoint. Prometheus prophecy arriving soon.
 * **Shadow Alert Sentinels:** Deploy alert emails to notify you of critical resource usage, maintaining vigilance.
 
 ## MonArgs
@@ -127,6 +128,25 @@ Where:
     - RET: Log method return value.
     - ADD: Add custom code.
 
+
+## Shadow Metrics Gate
+
+If `exposeMetrics: true` is declared in your scroll of configuration,
+MonarchJavaAgent summons a spectral gateway — a lightweight HTTP server that exposes the heartbeat of your JVM in real time.
+
+Default Rift:
+http://localhost:9090/metrics
+
+Through this rift, the agent unveils:
+
+- Heap usage
+- CPU load
+- GC stats
+- Thread stats
+- Classloader stats
+- Agent info + timestamp
+
+Soon, in the next ascension, the agent will unlock Prometheus-tier incantations — `/metrics` in true Prometheus format, granting interoperability with realms of dashboards and sentinels.
 
 ## Forging the Shadow
 
