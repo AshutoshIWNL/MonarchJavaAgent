@@ -144,7 +144,26 @@ if [[ "$heap_count" -lt 1 ]]; then
 fi
 
 metrics_payload="$(curl -fsS "http://127.0.0.1:$metrics_port/metrics")"
-grep -q '"agent":"MonarchJavaAgent"' <<<"$metrics_payload"
+grep -q '# HELP monarch_agent_info' <<<"$metrics_payload"
+grep -q 'monarch_agent_info{agent="MonarchJavaAgent"} 1.0' <<<"$metrics_payload"
+
+metrics_content_type="$(curl -fsSI "http://127.0.0.1:$metrics_port/metrics" | tr -d '\r' | awk -F': ' 'tolower($1)=="content-type"{print $2}' | tail -n 1)"
+if [[ "$metrics_content_type" != text/plain* ]]; then
+  echo "Metrics endpoint did not return Prometheus text content type after attach" >&2
+  exit 1
+fi
+
+openmetrics_payload="$(curl -fsS -H 'Accept: application/openmetrics-text; version=1.0.0' "http://127.0.0.1:$metrics_port/metrics")"
+grep -q '# EOF' <<<"$openmetrics_payload"
+
+openmetrics_content_type="$(curl -fsSI -H 'Accept: application/openmetrics-text; version=1.0.0' "http://127.0.0.1:$metrics_port/metrics" | tr -d '\r' | awk -F': ' 'tolower($1)=="content-type"{print $2}' | tail -n 1)"
+if [[ "$openmetrics_content_type" != application/openmetrics-text* ]]; then
+  echo "OpenMetrics content type not returned after attach" >&2
+  exit 1
+fi
+
+metrics_json_payload="$(curl -fsS "http://127.0.0.1:$metrics_port/metrics.json")"
+grep -q '"agent":"MonarchJavaAgent"' <<<"$metrics_json_payload"
 
 echo "[smoke-attach] PASS"
 echo "[smoke-attach] Trace: $trace_file"

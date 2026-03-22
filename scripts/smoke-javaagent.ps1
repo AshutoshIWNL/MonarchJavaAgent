@@ -141,7 +141,20 @@ try {
 
     $metrics = Invoke-WebRequest -UseBasicParsing -Uri ("http://127.0.0.1:{0}/metrics" -f $metricsPort)
     Assert-True ($metrics.StatusCode -eq 200) "Metrics endpoint did not return HTTP 200"
-    Assert-True ($metrics.Content.Contains('"agent":"MonarchJavaAgent"')) "Metrics payload missing agent identifier"
+    Assert-True ($metrics.Headers["Content-Type"].Contains("text/plain")) "Metrics endpoint did not return Prometheus text content type"
+    Assert-True ($metrics.Content.Contains("monarch_agent_info{agent=""MonarchJavaAgent""} 1.0")) "Prometheus payload missing monarch_agent_info"
+
+    $openMetrics = Invoke-WebRequest -UseBasicParsing `
+        -Headers @{ "Accept" = "application/openmetrics-text; version=1.0.0" } `
+        -Uri ("http://127.0.0.1:{0}/metrics" -f $metricsPort)
+    Assert-True ($openMetrics.StatusCode -eq 200) "OpenMetrics request did not return HTTP 200"
+    Assert-True ($openMetrics.Headers["Content-Type"].Contains("application/openmetrics-text")) "OpenMetrics content type not returned"
+    $openMetricsBody = & curl.exe -fsS -H "Accept: application/openmetrics-text; version=1.0.0" ("http://127.0.0.1:{0}/metrics" -f $metricsPort)
+    Assert-True ($openMetricsBody.Contains("# EOF")) "OpenMetrics payload missing EOF marker"
+
+    $metricsJson = Invoke-WebRequest -UseBasicParsing -Uri ("http://127.0.0.1:{0}/metrics.json" -f $metricsPort)
+    Assert-True ($metricsJson.StatusCode -eq 200) "Metrics JSON endpoint did not return HTTP 200"
+    Assert-True ($metricsJson.Content.Contains('"agent":"MonarchJavaAgent"')) "Metrics JSON payload missing agent identifier"
 
     Write-Host "[smoke-javaagent] PASS"
     Write-Host "[smoke-javaagent] Trace: $traceFile"
