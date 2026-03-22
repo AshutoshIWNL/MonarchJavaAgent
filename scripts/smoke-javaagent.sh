@@ -58,9 +58,11 @@ shouldInstrument: true
 configRefreshInterval: 1000
 traceFileLocation: "$escaped_trace_root"
 agentRules:
+  - com.monarchit.target.TargetApp::TargetApp@INGRESS::ARGS
   - com.monarchit.target.TargetApp::hotMethod@INGRESS::ARGS
   - com.monarchit.target.TargetApp::hotMethod@EGRESS::RET
   - com.monarchit.target.TargetApp::hotMethod@INGRESS::STACK
+  - com.monarchit.target.TargetApp::filteredStackMethod@INGRESS::STACK::[com.monarchit.target.TargetApp.main]
   - com.monarchit.target.TargetApp::profileWork@PROFILE
   - com.monarchit.target.TargetApp::hotMethod@INGRESS::ADD::[com.asm.mja.logging.TraceFileLogger.getInstance().trace("ADD_MARKER");]
   - com.monarchit.target.TargetApp::lineProbe@CODEPOINT($codepoint_line)::ADD::[com.asm.mja.logging.TraceFileLogger.getInstance().trace("CODEPOINT_MARKER");]
@@ -112,8 +114,10 @@ fi
 
 trace_text="$(cat "$trace_file")"
 grep -q "ARGS |" <<<"$trace_text"
+grep -q "{com.monarchit.target.TargetApp.TargetApp} | INGRESS | ARGS" <<<"$trace_text"
 grep -q "RET |" <<<"$trace_text"
 grep -q "STACK" <<<"$trace_text"
+grep -q "{com.monarchit.target.TargetApp.filteredStackMethod} | INGRESS | STACK" <<<"$trace_text"
 grep -q "PROFILE | Execution time" <<<"$trace_text"
 grep -q "ADD_MARKER" <<<"$trace_text"
 grep -q "CODEPOINT_MARKER" <<<"$trace_text"

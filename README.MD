@@ -29,6 +29,12 @@ After refactoring, startup wiring is split into focused bootstrap components:
 
 This keeps behavior unchanged while reducing coupling in the startup path.
 
+Transformer internals are also split using a handler strategy:
+
+- `GlobalTransformer`: orchestration (rule selection, backup, dispatch)
+- `ActionExecution`: per-rule execution context
+- `transformer.handlers.*`: isolated action handlers (`ARGS`, `RET`, `STACK`, `HEAP`, `ADD`, `PROFILE`)
+
 ## Agent Arguments
 
 | Argument          | Description                                                               |
@@ -170,6 +176,8 @@ The project now includes an integration smoke harness that validates:
 - Instrumentation markers for `ARGS`, `RET`, `STACK`, `PROFILE`, `ADD`, `CODEPOINT`, `HEAP`
 - Metrics endpoint availability
 - Heap dump generation
+- Runtime config reload behavior (rule removal stops instrumentation effect without restart)
+- Invalid rule behavior (startup failure for malformed action rules)
 
 ### Prerequisites
 
@@ -183,11 +191,21 @@ The project now includes an integration smoke harness that validates:
 powershell -ExecutionPolicy Bypass -File scripts\smoke-all.ps1
 ```
 
-To run individual modes:
+To run individual suites:
 
 ```powershell
+# full startup + attach coverage
 powershell -ExecutionPolicy Bypass -File scripts\smoke-javaagent.ps1
 powershell -ExecutionPolicy Bypass -File scripts\smoke-attach.ps1
+
+# quick partial checks (fast signal)
+powershell -ExecutionPolicy Bypass -File scripts\smoke-quick.ps1
+
+# deep runtime config reload checks
+powershell -ExecutionPolicy Bypass -File scripts\smoke-config-reload.ps1
+
+# invalid rule behavior check
+powershell -ExecutionPolicy Bypass -File scripts\smoke-invalid-rule.ps1
 ```
 
 ### Linux/macOS (Shell)
@@ -201,8 +219,18 @@ bash scripts/smoke-all.sh
 To run individual modes:
 
 ```bash
+# full startup + attach coverage
 bash scripts/smoke-javaagent.sh
 bash scripts/smoke-attach.sh
+
+# quick partial checks (fast signal)
+bash scripts/smoke-quick.sh
+
+# deep runtime config reload checks
+bash scripts/smoke-config-reload.sh
+
+# invalid rule behavior check
+bash scripts/smoke-invalid-rule.sh
 ```
 
 Smoke run artifacts (trace/log/config) are written to temp run directories under:

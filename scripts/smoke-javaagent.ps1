@@ -69,9 +69,11 @@ shouldInstrument: true
 configRefreshInterval: 1000
 traceFileLocation: "$(Escape-YamlPath $traceRoot)"
 agentRules:
+  - com.monarchit.target.TargetApp::TargetApp@INGRESS::ARGS
   - com.monarchit.target.TargetApp::hotMethod@INGRESS::ARGS
   - com.monarchit.target.TargetApp::hotMethod@EGRESS::RET
   - com.monarchit.target.TargetApp::hotMethod@INGRESS::STACK
+  - com.monarchit.target.TargetApp::filteredStackMethod@INGRESS::STACK::[com.monarchit.target.TargetApp.main]
   - com.monarchit.target.TargetApp::profileWork@PROFILE
   - com.monarchit.target.TargetApp::hotMethod@INGRESS::ADD::[com.asm.mja.logging.TraceFileLogger.getInstance().trace("ADD_MARKER");]
   - com.monarchit.target.TargetApp::lineProbe@CODEPOINT($codepointLine)::ADD::[com.asm.mja.logging.TraceFileLogger.getInstance().trace("CODEPOINT_MARKER");]
@@ -120,8 +122,10 @@ try {
 
     $traceText = Get-Content -Path $traceFile -Raw
     Assert-True ($traceText.Contains("ARGS |")) "Missing ARGS instrumentation marker"
+    Assert-True ($traceText.Contains("{com.monarchit.target.TargetApp.TargetApp} | INGRESS | ARGS")) "Missing constructor ARGS instrumentation marker"
     Assert-True ($traceText.Contains("RET |")) "Missing RET instrumentation marker"
     Assert-True ($traceText.Contains("STACK")) "Missing STACK instrumentation marker"
+    Assert-True ($traceText.Contains("{com.monarchit.target.TargetApp.filteredStackMethod} | INGRESS | STACK")) "Missing STACK filter instrumentation marker"
     Assert-True ($traceText.Contains("PROFILE | Execution time")) "Missing PROFILE instrumentation marker"
     Assert-True ($traceText.Contains("ADD_MARKER")) "Missing ADD custom code marker"
     Assert-True ($traceText.Contains("CODEPOINT_MARKER")) "Missing CODEPOINT custom code marker"
