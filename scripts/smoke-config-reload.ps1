@@ -35,29 +35,35 @@ function Write-Config {
     )
     $addRule = ""
     if ($EnableAddRule) {
-        $addRule = "  - com.monarchit.target.TargetApp::hotMethod@INGRESS::ADD::[com.asm.mja.logging.TraceFileLogger.getInstance().trace(""RELOAD_MARKER_ON"");]"
+        $addRule = "    - com.monarchit.target.TargetApp::hotMethod@INGRESS::ADD::[com.asm.mja.logging.TraceFileLogger.getInstance().trace(""RELOAD_MARKER_ON"");]"
     }
 
     $yaml = @"
-shouldInstrument: true
-configRefreshInterval: 1000
-traceFileLocation: "$(Escape-YamlPath $TraceRoot)"
-agentRules:
-  - com.monarchit.target.TargetApp::hotMethod@EGRESS::RET
+mode: instrumenter
+instrumentation:
+  enabled: true
+  configRefreshInterval: 1000
+  traceFileLocation: "$(Escape-YamlPath $TraceRoot)"
+  agentRules:
+    - com.monarchit.target.TargetApp::hotMethod@EGRESS::RET
 $addRule
-printClassLoaderTrace: false
-printJVMSystemProperties: false
-printEnvironmentVariables: false
-printJVMHeapUsage: false
-printJVMCpuUsage: false
-printJVMThreadUsage: false
-printJVMGCStats: false
-printJVMClassLoaderStats: false
-exposeMetrics: false
-metricsPort: 0
-maxHeapDumps: 0
-sendAlertEmails: false
-emailRecipientList: []
+observer:
+  enabled: false
+  printClassLoaderTrace: false
+  printJVMSystemProperties: false
+  printEnvironmentVariables: false
+  metrics:
+    exposeHttp: false
+    port: 0
+    heapUsage: false
+    cpuUsage: false
+    threadUsage: false
+    gcStats: false
+    classLoaderStats: false
+alerts:
+  enabled: false
+  maxHeapDumps: 0
+  emailRecipientList: []
 "@
     Set-Content -Path $ConfigFile -Value $yaml -Encoding UTF8
 }

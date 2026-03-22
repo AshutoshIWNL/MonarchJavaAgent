@@ -65,32 +65,38 @@ if ($LASTEXITCODE -ne 0) { throw "javac failed with exit code $LASTEXITCODE" }
 $codepointLine = Get-CodepointLine -SourceFile $targetSrc
 
 $yaml = @"
-shouldInstrument: true
-configRefreshInterval: 1000
-traceFileLocation: "$(Escape-YamlPath $traceRoot)"
-agentRules:
-  - com.monarchit.target.TargetApp::TargetApp@INGRESS::ARGS
-  - com.monarchit.target.TargetApp::hotMethod@INGRESS::ARGS
-  - com.monarchit.target.TargetApp::hotMethod@EGRESS::RET
-  - com.monarchit.target.TargetApp::hotMethod@INGRESS::STACK
-  - com.monarchit.target.TargetApp::filteredStackMethod@INGRESS::STACK::[com.monarchit.target.TargetApp.main]
-  - com.monarchit.target.TargetApp::profileWork@PROFILE
-  - com.monarchit.target.TargetApp::hotMethod@INGRESS::ADD::[com.asm.mja.logging.TraceFileLogger.getInstance().trace("ADD_MARKER");]
-  - com.monarchit.target.TargetApp::lineProbe@CODEPOINT($codepointLine)::ADD::[com.asm.mja.logging.TraceFileLogger.getInstance().trace("CODEPOINT_MARKER");]
-  - com.monarchit.target.TargetApp::memoryBurst@INGRESS::HEAP
-printClassLoaderTrace: false
-printJVMSystemProperties: false
-printEnvironmentVariables: false
-printJVMHeapUsage: true
-printJVMCpuUsage: true
-printJVMThreadUsage: true
-printJVMGCStats: true
-printJVMClassLoaderStats: true
-exposeMetrics: true
-metricsPort: $metricsPort
-maxHeapDumps: 1
-sendAlertEmails: false
-emailRecipientList: []
+mode: hybrid
+instrumentation:
+  enabled: true
+  configRefreshInterval: 1000
+  traceFileLocation: "$(Escape-YamlPath $traceRoot)"
+  agentRules:
+    - com.monarchit.target.TargetApp::TargetApp@INGRESS::ARGS
+    - com.monarchit.target.TargetApp::hotMethod@INGRESS::ARGS
+    - com.monarchit.target.TargetApp::hotMethod@EGRESS::RET
+    - com.monarchit.target.TargetApp::hotMethod@INGRESS::STACK
+    - com.monarchit.target.TargetApp::filteredStackMethod@INGRESS::STACK::[com.monarchit.target.TargetApp.main]
+    - com.monarchit.target.TargetApp::profileWork@PROFILE
+    - com.monarchit.target.TargetApp::hotMethod@INGRESS::ADD::[com.asm.mja.logging.TraceFileLogger.getInstance().trace("ADD_MARKER");]
+    - com.monarchit.target.TargetApp::lineProbe@CODEPOINT($codepointLine)::ADD::[com.asm.mja.logging.TraceFileLogger.getInstance().trace("CODEPOINT_MARKER");]
+    - com.monarchit.target.TargetApp::memoryBurst@INGRESS::HEAP
+observer:
+  enabled: true
+  printClassLoaderTrace: false
+  printJVMSystemProperties: false
+  printEnvironmentVariables: false
+  metrics:
+    exposeHttp: true
+    port: $metricsPort
+    heapUsage: true
+    cpuUsage: true
+    threadUsage: true
+    gcStats: true
+    classLoaderStats: true
+alerts:
+  enabled: false
+  maxHeapDumps: 1
+  emailRecipientList: []
 "@
 Set-Content -Path $configFile -Value $yaml -Encoding UTF8
 

@@ -38,25 +38,31 @@ javac -d "$target_classes" "$target_src"
 
 escaped_trace_root="$(escape_yaml_path "$trace_root")"
 cat > "$config_file" <<EOF
-shouldInstrument: true
-configRefreshInterval: 1000
-traceFileLocation: "$escaped_trace_root"
-agentRules:
-  - com.monarchit.target.TargetApp::hotMethod@INGRESS::ARGS
-  - com.monarchit.target.TargetApp::hotMethod@EGRESS::RET
-printClassLoaderTrace: false
-printJVMSystemProperties: false
-printEnvironmentVariables: false
-printJVMHeapUsage: true
-printJVMCpuUsage: true
-printJVMThreadUsage: true
-printJVMGCStats: true
-printJVMClassLoaderStats: true
-exposeMetrics: false
-metricsPort: 0
-maxHeapDumps: 0
-sendAlertEmails: false
-emailRecipientList: []
+mode: hybrid
+instrumentation:
+  enabled: true
+  configRefreshInterval: 1000
+  traceFileLocation: "$escaped_trace_root"
+  agentRules:
+    - com.monarchit.target.TargetApp::hotMethod@INGRESS::ARGS
+    - com.monarchit.target.TargetApp::hotMethod@EGRESS::RET
+observer:
+  enabled: true
+  printClassLoaderTrace: false
+  printJVMSystemProperties: false
+  printEnvironmentVariables: false
+  metrics:
+    exposeHttp: false
+    port: 0
+    heapUsage: true
+    cpuUsage: true
+    threadUsage: true
+    gcStats: true
+    classLoaderStats: true
+alerts:
+  enabled: false
+  maxHeapDumps: 0
+  emailRecipientList: []
 EOF
 
 agent_args="configFile=$config_file,agentLogFileDir=$agent_log_dir,agentLogLevel=INFO,agentJarPath=$agent_jar_local"

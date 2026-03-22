@@ -30,7 +30,7 @@ function Get-AgentJarPath {
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = Split-Path -Parent $scriptDir
 
-Write-Host "[smoke-quick] Building agent..."
+Write-Host "[smoke-config-precedence] Building agent..."
 Push-Location $repoRoot
 mvn -q -DskipTests clean package
 if ($LASTEXITCODE -ne 0) { throw "Maven clean package failed with exit code $LASTEXITCODE" }
@@ -38,7 +38,7 @@ Pop-Location
 
 $agentJar = Get-AgentJarPath -RepoRoot $repoRoot
 $targetSrc = Join-Path $repoRoot "it\target-app\src\com\asm\mja\it\TargetApp.java"
-$runRoot = Join-Path $env:TEMP "mja-smoke\quick"
+$runRoot = Join-Path $env:TEMP "mja-smoke\config-precedence"
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $runDir = Join-Path $runRoot $timestamp
 $targetClasses = Join-Path $runDir "target-classes"
@@ -50,19 +50,16 @@ $agentJarLocal = Join-Path $runDir "agent.jar"
 New-Item -ItemType Directory -Force -Path $targetClasses, $runDir, $traceRoot, $agentLogDir | Out-Null
 Copy-Item -Path $agentJar -Destination $agentJarLocal -Force
 
-Write-Host "[smoke-quick] Compiling target app..."
+Write-Host "[smoke-config-precedence] Compiling target app..."
 javac -d $targetClasses $targetSrc
 if ($LASTEXITCODE -ne 0) { throw "javac failed with exit code $LASTEXITCODE" }
 
 $yaml = @"
-mode: hybrid
+mode: observer
 instrumentation:
-  enabled: true
+  enabled: false
   configRefreshInterval: 1000
   traceFileLocation: "$(Escape-YamlPath $traceRoot)"
-  agentRules:
-    - com.monarchit.target.TargetApp::hotMethod@INGRESS::ARGS
-    - com.monarchit.target.TargetApp::hotMethod@EGRESS::RET
 observer:
   enabled: true
   printClassLoaderTrace: false
@@ -71,15 +68,17 @@ observer:
   metrics:
     exposeHttp: false
     port: 0
-    heapUsage: true
+    heapUsage: false
     cpuUsage: true
-    threadUsage: true
-    gcStats: true
-    classLoaderStats: true
+    threadUsage: false
+    gcStats: false
+    classLoaderStats: false
 alerts:
   enabled: false
   maxHeapDumps: 0
   emailRecipientList: []
+printJVMHeapUsage: true
+printJVMCpuUsage: false
 "@
 Set-Content -Path $configFile -Value $yaml -Encoding UTF8
 
@@ -87,7 +86,7 @@ $agentArgs = "configFile=$configFile,agentLogFileDir=$agentLogDir,agentLogLevel=
 $targetStdOut = Join-Path $runDir "target.out.log"
 $targetStdErr = Join-Path $runDir "target.err.log"
 
-Write-Host "[smoke-quick] Starting target app with -javaagent..."
+Write-Host "[smoke-config-precedence] Starting target app with nested+legacy config..."
 $proc = Start-Process `
     -FilePath "java" `
     -ArgumentList @(
@@ -104,21 +103,18 @@ try {
     Start-Sleep -Seconds 8
     $traceDir = Get-ChildItem -Path $traceRoot -Directory | Sort-Object LastWriteTime -Descending | Select-Object -First 1
     Assert-True ($null -ne $traceDir) "No trace directory created under $traceRoot"
+
     $traceFile = Join-Path $traceDir.FullName "agent.trace"
     Assert-True (Test-Path $traceFile) "Trace file not found: $traceFile"
 
     $traceText = Get-Content -Path $traceFile -Raw
-    Assert-True ($traceText.Contains("ARGS |")) "Missing ARGS instrumentation marker"
-    Assert-True ($traceText.Contains("RET |")) "Missing RET instrumentation marker"
-    Assert-True ($traceText.Contains("Current JVM CPU Load")) "Missing CPU monitor trace"
-    Assert-True ($traceText.Contains("GC Stats -")) "Missing GC monitor trace"
-    Assert-True ($traceText.Contains("Thread Stats -")) "Missing Thread monitor trace"
-    Assert-True ($traceText.Contains("ClassLoader Stats -")) "Missing ClassLoader monitor trace"
-    Assert-True ($traceText.Contains("{USED:")) "Missing Heap monitor trace"
+    Assert-True ($traceText.Contains("Current JVM CPU Load")) "Expected CPU monitor trace from nested observer metrics config"
+    Assert-True (-not $traceText.Contains("{USED:")) "Heap monitor trace was present even though nested heapUsage=false should override legacy printJVMHeapUsage=true"
+    Assert-True (-not $traceText.Contains("ARGS |")) "Unexpected instrumentation marker in observer-only precedence test"
 
-    Write-Host "[smoke-quick] PASS"
-    Write-Host "[smoke-quick] Trace: $traceFile"
-    Write-Host "[smoke-quick] Run dir: $runDir"
+    Write-Host "[smoke-config-precedence] PASS"
+    Write-Host "[smoke-config-precedence] Trace: $traceFile"
+    Write-Host "[smoke-config-precedence] Run dir: $runDir"
 }
 finally {
     if ($null -ne $proc -and -not $proc.HasExited) {

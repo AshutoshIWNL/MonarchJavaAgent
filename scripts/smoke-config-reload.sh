@@ -14,29 +14,35 @@ write_config() {
 
   {
     cat <<EOF
-shouldInstrument: true
-configRefreshInterval: 1000
-traceFileLocation: "$escaped_trace_root"
-agentRules:
-  - com.monarchit.target.TargetApp::hotMethod@EGRESS::RET
+mode: instrumenter
+instrumentation:
+  enabled: true
+  configRefreshInterval: 1000
+  traceFileLocation: "$escaped_trace_root"
+  agentRules:
+    - com.monarchit.target.TargetApp::hotMethod@EGRESS::RET
 EOF
     if [[ "$enable_add_rule" == "true" ]]; then
-      echo '  - com.monarchit.target.TargetApp::hotMethod@INGRESS::ADD::[com.asm.mja.logging.TraceFileLogger.getInstance().trace("RELOAD_MARKER_ON");]'
+      echo '    - com.monarchit.target.TargetApp::hotMethod@INGRESS::ADD::[com.asm.mja.logging.TraceFileLogger.getInstance().trace("RELOAD_MARKER_ON");]'
     fi
     cat <<EOF
-printClassLoaderTrace: false
-printJVMSystemProperties: false
-printEnvironmentVariables: false
-printJVMHeapUsage: false
-printJVMCpuUsage: false
-printJVMThreadUsage: false
-printJVMGCStats: false
-printJVMClassLoaderStats: false
-exposeMetrics: false
-metricsPort: 0
-maxHeapDumps: 0
-sendAlertEmails: false
-emailRecipientList: []
+observer:
+  enabled: false
+  printClassLoaderTrace: false
+  printJVMSystemProperties: false
+  printEnvironmentVariables: false
+  metrics:
+    exposeHttp: false
+    port: 0
+    heapUsage: false
+    cpuUsage: false
+    threadUsage: false
+    gcStats: false
+    classLoaderStats: false
+alerts:
+  enabled: false
+  maxHeapDumps: 0
+  emailRecipientList: []
 EOF
   } > "$config_file"
 }

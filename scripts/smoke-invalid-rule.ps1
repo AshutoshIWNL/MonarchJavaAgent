@@ -55,24 +55,30 @@ javac -d $targetClasses $targetSrc
 if ($LASTEXITCODE -ne 0) { throw "javac failed with exit code $LASTEXITCODE" }
 
 $yaml = @"
-shouldInstrument: true
-configRefreshInterval: 1000
-traceFileLocation: "$(Escape-YamlPath $traceRoot)"
-agentRules:
-  - com.monarchit.target.TargetApp::hotMethod@INGRESS::NOT_A_REAL_ACTION
-printClassLoaderTrace: false
-printJVMSystemProperties: false
-printEnvironmentVariables: false
-printJVMHeapUsage: false
-printJVMCpuUsage: false
-printJVMThreadUsage: false
-printJVMGCStats: false
-printJVMClassLoaderStats: false
-exposeMetrics: false
-metricsPort: 0
-maxHeapDumps: 0
-sendAlertEmails: false
-emailRecipientList: []
+mode: instrumenter
+instrumentation:
+  enabled: true
+  configRefreshInterval: 1000
+  traceFileLocation: "$(Escape-YamlPath $traceRoot)"
+  agentRules:
+    - com.monarchit.target.TargetApp::hotMethod@INGRESS::NOT_A_REAL_ACTION
+observer:
+  enabled: false
+  printClassLoaderTrace: false
+  printJVMSystemProperties: false
+  printEnvironmentVariables: false
+  metrics:
+    exposeHttp: false
+    port: 0
+    heapUsage: false
+    cpuUsage: false
+    threadUsage: false
+    gcStats: false
+    classLoaderStats: false
+alerts:
+  enabled: false
+  maxHeapDumps: 0
+  emailRecipientList: []
 "@
 Set-Content -Path $configFile -Value $yaml -Encoding UTF8
 
