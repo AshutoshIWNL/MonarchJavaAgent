@@ -19,6 +19,16 @@ MonarchJavaAgent is a powerful Java agent for method monitoring and analysis. It
 - **Metrics HTTP Endpoint**: Exposes JVM metrics (heap, GC, threads, CPU, classloader) via a built-in `/metrics` HTTP endpoint. Useful for dashboards and monitoring tools. Prometheus-compatible format coming in the next release.
 - **Alert Emails**: Sends alert emails for high heap usage, high CPU usage, thread deadlock, high classloading, etc. in the target application. 
 
+## Architecture (Current)
+
+After refactoring, startup wiring is split into focused bootstrap components:
+
+- `AgentConfigurator`: thin facade used by `Agent.premain` and `Agent.agentmain`.
+- `AgentStartupOrchestrator`: startup sequence orchestration.
+- `LoggingBootstrap`, `ConfigBootstrap`, `TraceBootstrap`, `SmtpBootstrap`, `TransformerBootstrap`, `InstrumentationManagerBootstrap`: focused startup stages.
+
+This keeps behavior unchanged while reducing coupling in the startup path.
+
 ## Agent Arguments
 
 | Argument          | Description                                                               |
@@ -146,10 +156,59 @@ Prometheus `/metrics` format support is planned for the next release.
 ## Building from Source
 
 ```bash
-git https://github.com/AshutoshIWNL/MonarchJavaAgent.git
+git clone https://github.com/AshutoshIWNL/MonarchJavaAgent.git
 cd MonarchJavaAgent
 mvn clean package
 ```
+
+## Smoke Testing (Startup + Runtime Attach)
+
+The project now includes an integration smoke harness that validates:
+
+- `-javaagent` startup mode
+- Runtime attach mode via Attach API
+- Instrumentation markers for `ARGS`, `RET`, `STACK`, `PROFILE`, `ADD`, `CODEPOINT`, `HEAP`
+- Metrics endpoint availability
+- Heap dump generation
+
+### Prerequisites
+
+- Java + Maven available in `PATH`
+- For runtime attach tests, set `JAVA_HOME` to a JDK (not JRE)
+- Profiling/instrumentation currently runs with bytecode verification disabled (`-Xverify:none`) in smoke scripts
+
+### Windows (PowerShell)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\smoke-all.ps1
+```
+
+To run individual modes:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\smoke-javaagent.ps1
+powershell -ExecutionPolicy Bypass -File scripts\smoke-attach.ps1
+```
+
+### Linux/macOS (Shell)
+
+```bash
+chmod +x scripts/*.sh
+export JAVA_HOME=/path/to/jdk
+bash scripts/smoke-all.sh
+```
+
+To run individual modes:
+
+```bash
+bash scripts/smoke-javaagent.sh
+bash scripts/smoke-attach.sh
+```
+
+Smoke run artifacts (trace/log/config) are written to temp run directories under:
+
+- Windows: `%TEMP%\mja-smoke\...`
+- Linux/macOS: `/tmp/mja-smoke/...`
 
 ## Author
 
