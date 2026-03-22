@@ -126,25 +126,35 @@ public class InstrumentationManager implements Runnable {
     }
 
     private void handleConfigurationChange(Config config) {
-        if (!isBackupDirAvailable()) {
-            logger.warn("No backup available, won't proceed with reverting instrumentations");
+        boolean instrumentationActive = config.isInstrumentationActive();
+
+        if (!instrumentationActive) {
+            disableInstrumentationIfActive(config);
             return;
         }
 
-        List<Rule> rules = new ArrayList<>(currentRules);
+        if (transformer == null) {
+            logger.warn("Instrumentation was not initialized at startup, so it cannot be enabled via config reload.");
+            initialConfig = config;
+            return;
+        }
+
+        if (!isBackupDirAvailable()) {
+            logger.warn("No backup available, won't proceed with reverting instrumentations");
+            initialConfig = config;
+            return;
+        }
+
+        List<Rule> rules = currentRules == null ? Collections.<Rule>emptyList() : new ArrayList<>(currentRules);
         resetTransformerState();
         revertInstrumentation(rules);
 
-        if (!config.isShouldInstrument()) {
-            logger.trace("Going to shutdown instrumentation");
-            shutdown();
-            return;
-        }
         transformer.resetConfig(config);
         List<String> rulesString = new ArrayList<>(config.getAgentRules());
         List<Rule> newRules = RuleParser.parseRules(rulesString);
         addNewInstrumentation(newRules);
         currentRules = newRules;
+        initialConfig = config;
     }
 
     private boolean isBackupDirAvailable() {
@@ -153,11 +163,17 @@ public class InstrumentationManager implements Runnable {
     }
 
     private void resetTransformerState() {
+        if (transformer == null) {
+            return;
+        }
         transformer.resetClassesTransformed();
         transformer.resetRules();
     }
 
     private void addNewInstrumentation(List<Rule> newRules) {
+        if (transformer == null) {
+            return;
+        }
         transformer.setRules(newRules);
         Class<?>[] classesToInstrument = ClassRuleUtils.ruleClasses(instrumentation.getAllLoadedClasses(), newRules);
         for (Class<?> classz : classesToInstrument) {
@@ -241,6 +257,21 @@ public class InstrumentationManager implements Runnable {
 
     private void startOrStopMonitors(Config config) {
         if (config == null) return;
+
+        if (!config.isObserverActive()) {
+            MetricsHttpServer.getInstance().stop();
+            shutdownMonitor(jvmMemoryMonitor);
+            jvmMemoryMonitor = null;
+            shutdownMonitor(jvmCpuMonitor);
+            jvmCpuMonitor = null;
+            shutdownMonitor(jvmGcMonitor);
+            jvmGcMonitor = null;
+            shutdownMonitor(jvmThreadMonitor);
+            jvmThreadMonitor = null;
+            shutdownMonitor(jvmClassLoaderMonitor);
+            jvmClassLoaderMonitor = null;
+            return;
+        }
 
         if (config.isExposeMetrics()) {
             MetricsHttpServer.getInstance().start(config.getMetricsPort());
@@ -331,6 +362,34 @@ public class InstrumentationManager implements Runnable {
                 jvmClassLoaderMonitor.shutdown();
                 jvmClassLoaderMonitor = null;
             }
+        }
+    }
+
+    private void disableInstrumentationIfActive(Config config) {
+        if (transformer == null || currentRules == null || currentRules.isEmpty()) {
+            initialConfig = config;
+            currentRules = Collections.emptyList();
+            return;
+        }
+
+        if (!isBackupDirAvailable()) {
+            logger.warn("No backup available, won't proceed with reverting instrumentations");
+            initialConfig = config;
+            currentRules = Collections.emptyList();
+            return;
+        }
+
+        List<Rule> rules = new ArrayList<>(currentRules);
+        resetTransformerState();
+        revertInstrumentation(rules);
+        currentRules = Collections.emptyList();
+        initialConfig = config;
+        logger.trace("Instrumentation disabled by config reload");
+    }
+
+    private void shutdownMonitor(AbstractMonitor monitor) {
+        if (monitor != null && !monitor.isDown()) {
+            monitor.shutdown();
         }
     }
 

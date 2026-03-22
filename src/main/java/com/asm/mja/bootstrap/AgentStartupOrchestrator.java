@@ -15,6 +15,7 @@ import com.asm.mja.utils.JVMUtils;
 import java.io.File;
 import java.lang.instrument.Instrumentation;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -52,40 +53,55 @@ public class AgentStartupOrchestrator {
             return;
         }
 
-        if (!config.isShouldInstrument()) {
-            AgentLogger.warning("ShouldInstrument is set to false, exiting!");
+        boolean instrumentationActive = config.isInstrumentationActive();
+        boolean observerActive = config.isObserverActive();
+        boolean alertsActive = config.isAlertsActive();
+
+        if (!instrumentationActive && !observerActive) {
+            AgentLogger.warning("No active agent components configured for mode " + config.getResolvedMode() + ", exiting.");
             return;
         }
 
-        HeapDumpUtils.setMaxHeapCount(config.getMaxHeapDumps());
+        if (config.getTraceFileLocation() == null || config.getTraceFileLocation().isEmpty()) {
+            AgentLogger.error("Trace file location is required when instrumentation or observer components are active");
+            return;
+        }
 
         AgentLogger.debug("Creating TraceFileLogger instance for instrumentation logging");
-
         TraceFileLogger traceFileLogger = TraceBootstrap.setupTraceFileLogger(config.getTraceFileLocation());
 
         traceFileLogger.trace(AGENT_NAME + " Java Agent " + VERSION);
         traceFileLogger.trace(JVMUtils.getJVMCommandLine());
 
-        SmtpBootstrap.setupSMTP(agentArgs, config.isSendAlertEmails(), config.getEmailRecipientList());
+        if (alertsActive) {
+            HeapDumpUtils.setMaxHeapCount(config.getMaxHeapDumps());
+            SmtpBootstrap.setupSMTP(agentArgs, config.isSendAlertEmails(), config.getEmailRecipientList());
+        }
 
-        if (config.isPrintJVMSystemProperties()) {
+        if (observerActive && config.isPrintJVMSystemProperties()) {
             traceFileLogger.trace(JVMUtils.getJVMSystemProperties());
         }
 
-        if (config.isPrintEnvironmentVariables()) {
+        if (observerActive && config.isPrintEnvironmentVariables()) {
             traceFileLogger.trace(JVMUtils.getEnvVars());
         }
 
-        List<String> rulesString = new ArrayList<>(config.getAgentRules());
-        List<Rule> rules = RuleParser.parseRules(rulesString);
-        GlobalTransformer globalTransformer = TransformerBootstrap.setupTransformer(
-                inst,
-                config,
-                traceFileLogger,
-                rules,
-                launchType,
-                agentAbsolutePath
-        );
+        List<Rule> rules = Collections.emptyList();
+        GlobalTransformer globalTransformer = null;
+        if (instrumentationActive) {
+            List<String> rulesString = new ArrayList<>(config.getAgentRules());
+            rules = RuleParser.parseRules(rulesString);
+            globalTransformer = TransformerBootstrap.setupTransformer(
+                    inst,
+                    config,
+                    traceFileLogger,
+                    rules,
+                    launchType,
+                    agentAbsolutePath
+            );
+        } else {
+            traceFileLogger.trace("Instrumentation startup skipped for mode " + config.getResolvedMode());
+        }
 
         InstrumentationManagerBootstrap.start(inst, configFile, globalTransformer, traceFileLogger, rules, config);
 

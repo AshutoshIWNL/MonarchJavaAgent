@@ -22,6 +22,32 @@ public class ConfigValidator {
      */
     public static boolean isValid(Config config) {
         AgentLogger.debug("Validating the config object");
+
+        if (config == null) {
+            AgentLogger.error("Config object is null");
+            return false;
+        }
+
+        if (!isInstrumentationValid(config)) {
+            return false;
+        }
+
+        if (!isObserverValid(config)) {
+            return false;
+        }
+
+        if (!isAlertsValid(config)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static boolean isInstrumentationValid(Config config) {
+        if (!config.isInstrumentationActive()) {
+            return true;
+        }
+
         String traceLocation = config.getTraceFileLocation();
         if (traceLocation == null || traceLocation.isEmpty() || !new File(traceLocation).isDirectory()) {
             AgentLogger.error("trace file directory doesn't exist or is not a directory");
@@ -32,6 +58,33 @@ public class ConfigValidator {
             AgentLogger.error("Rules are missing or empty");
             return false;
         }
-        return config.getMaxHeapDumps() >= 0;
+
+        return true;
+    }
+
+    private static boolean isObserverValid(Config config) {
+        if (!config.isObserverActive()) {
+            return true;
+        }
+
+        if (config.isExposeMetrics() && config.getMetricsPort() <= 0) {
+            AgentLogger.error("Metrics port must be greater than zero when metrics exposure is enabled");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static boolean isAlertsValid(Config config) {
+        if (!config.isAlertsActive()) {
+            return true;
+        }
+
+        if (config.getMaxHeapDumps() < 0) {
+            AgentLogger.error("Max heap dumps cannot be negative");
+            return false;
+        }
+
+        return true;
     }
 }
