@@ -27,25 +27,18 @@ function Get-AgentJarPath {
     return $candidates[0].FullName
 }
 
-function Get-CodepointLine {
-    param([string]$SourceFile)
-    $match = Select-String -Path $SourceFile -Pattern "CODEPOINT_TARGET"
-    Assert-True ($null -ne $match) "Could not find CODEPOINT_TARGET marker in target app source"
-    return $match.LineNumber
-}
-
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = Split-Path -Parent $scriptDir
 
-Write-Host "[smoke-javaagent] Building agent..."
+Write-Host "[smoke-quick] Building agent..."
 Push-Location $repoRoot
-mvn -q -DskipTests package
-if ($LASTEXITCODE -ne 0) { throw "Maven package failed with exit code $LASTEXITCODE" }
+mvn -q -DskipTests clean package
+if ($LASTEXITCODE -ne 0) { throw "Maven clean package failed with exit code $LASTEXITCODE" }
 Pop-Location
 
 $agentJar = Get-AgentJarPath -RepoRoot $repoRoot
 $targetSrc = Join-Path $repoRoot "it\target-app\src\com\asm\mja\it\TargetApp.java"
-$runRoot = Join-Path $env:TEMP "mja-smoke\javaagent"
+$runRoot = Join-Path $env:TEMP "mja-smoke\quick"
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $runDir = Join-Path $runRoot $timestamp
 $targetClasses = Join-Path $runDir "target-classes"
@@ -53,16 +46,13 @@ $traceRoot = Join-Path $runDir "trace"
 $agentLogDir = Join-Path $runDir "agent-logs"
 $configFile = Join-Path $runDir "config.yaml"
 $agentJarLocal = Join-Path $runDir "agent.jar"
-$metricsPort = 9099
 
 New-Item -ItemType Directory -Force -Path $targetClasses, $runDir, $traceRoot, $agentLogDir | Out-Null
 Copy-Item -Path $agentJar -Destination $agentJarLocal -Force
 
-Write-Host "[smoke-javaagent] Compiling target app..."
+Write-Host "[smoke-quick] Compiling target app..."
 javac -d $targetClasses $targetSrc
 if ($LASTEXITCODE -ne 0) { throw "javac failed with exit code $LASTEXITCODE" }
-
-$codepointLine = Get-CodepointLine -SourceFile $targetSrc
 
 $yaml = @"
 shouldInstrument: true
@@ -71,11 +61,6 @@ traceFileLocation: "$(Escape-YamlPath $traceRoot)"
 agentRules:
   - com.monarchit.target.TargetApp::hotMethod@INGRESS::ARGS
   - com.monarchit.target.TargetApp::hotMethod@EGRESS::RET
-  - com.monarchit.target.TargetApp::hotMethod@INGRESS::STACK
-  - com.monarchit.target.TargetApp::profileWork@PROFILE
-  - com.monarchit.target.TargetApp::hotMethod@INGRESS::ADD::[com.asm.mja.logging.TraceFileLogger.getInstance().trace("ADD_MARKER");]
-  - com.monarchit.target.TargetApp::lineProbe@CODEPOINT($codepointLine)::ADD::[com.asm.mja.logging.TraceFileLogger.getInstance().trace("CODEPOINT_MARKER");]
-  - com.monarchit.target.TargetApp::memoryBurst@INGRESS::HEAP
 printClassLoaderTrace: false
 printJVMSystemProperties: false
 printEnvironmentVariables: false
@@ -84,9 +69,9 @@ printJVMCpuUsage: true
 printJVMThreadUsage: true
 printJVMGCStats: true
 printJVMClassLoaderStats: true
-exposeMetrics: true
-metricsPort: $metricsPort
-maxHeapDumps: 1
+exposeMetrics: false
+metricsPort: 0
+maxHeapDumps: 0
 sendAlertEmails: false
 emailRecipientList: []
 "@
@@ -96,7 +81,7 @@ $agentArgs = "configFile=$configFile,agentLogFileDir=$agentLogDir,agentLogLevel=
 $targetStdOut = Join-Path $runDir "target.out.log"
 $targetStdErr = Join-Path $runDir "target.err.log"
 
-Write-Host "[smoke-javaagent] Starting target app with -javaagent..."
+Write-Host "[smoke-quick] Starting target app with -javaagent..."
 $proc = Start-Process `
     -FilePath "java" `
     -ArgumentList @(
@@ -111,37 +96,23 @@ $proc = Start-Process `
 
 try {
     Start-Sleep -Seconds 8
-
     $traceDir = Get-ChildItem -Path $traceRoot -Directory | Sort-Object LastWriteTime -Descending | Select-Object -First 1
     Assert-True ($null -ne $traceDir) "No trace directory created under $traceRoot"
-
     $traceFile = Join-Path $traceDir.FullName "agent.trace"
     Assert-True (Test-Path $traceFile) "Trace file not found: $traceFile"
 
     $traceText = Get-Content -Path $traceFile -Raw
     Assert-True ($traceText.Contains("ARGS |")) "Missing ARGS instrumentation marker"
     Assert-True ($traceText.Contains("RET |")) "Missing RET instrumentation marker"
-    Assert-True ($traceText.Contains("STACK")) "Missing STACK instrumentation marker"
-    Assert-True ($traceText.Contains("PROFILE | Execution time")) "Missing PROFILE instrumentation marker"
-    Assert-True ($traceText.Contains("ADD_MARKER")) "Missing ADD custom code marker"
-    Assert-True ($traceText.Contains("CODEPOINT_MARKER")) "Missing CODEPOINT custom code marker"
-    Assert-True ($traceText.Contains("HEAP")) "Missing HEAP instrumentation marker"
     Assert-True ($traceText.Contains("Current JVM CPU Load")) "Missing CPU monitor trace"
     Assert-True ($traceText.Contains("GC Stats -")) "Missing GC monitor trace"
     Assert-True ($traceText.Contains("Thread Stats -")) "Missing Thread monitor trace"
     Assert-True ($traceText.Contains("ClassLoader Stats -")) "Missing ClassLoader monitor trace"
     Assert-True ($traceText.Contains("{USED:")) "Missing Heap monitor trace"
 
-    $heapDumps = @(Get-ChildItem -Path $traceDir.FullName -Filter "*.hprof" -File -ErrorAction SilentlyContinue)
-    Assert-True ($heapDumps.Count -ge 1) "No heap dump file generated"
-
-    $metrics = Invoke-WebRequest -UseBasicParsing -Uri ("http://127.0.0.1:{0}/metrics" -f $metricsPort)
-    Assert-True ($metrics.StatusCode -eq 200) "Metrics endpoint did not return HTTP 200"
-    Assert-True ($metrics.Content.Contains('"agent":"MonarchJavaAgent"')) "Metrics payload missing agent identifier"
-
-    Write-Host "[smoke-javaagent] PASS"
-    Write-Host "[smoke-javaagent] Trace: $traceFile"
-    Write-Host "[smoke-javaagent] Run dir: $runDir"
+    Write-Host "[smoke-quick] PASS"
+    Write-Host "[smoke-quick] Trace: $traceFile"
+    Write-Host "[smoke-quick] Run dir: $runDir"
 }
 finally {
     if ($null -ne $proc -and -not $proc.HasExited) {

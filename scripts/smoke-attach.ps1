@@ -142,6 +142,11 @@ Write-Host "[smoke-attach] Attaching agent to PID $($proc.Id)..."
     Assert-True ($traceText.Contains("ADD_MARKER")) "Missing ADD custom code marker after attach"
     Assert-True ($traceText.Contains("CODEPOINT_MARKER")) "Missing CODEPOINT custom code marker after attach"
     Assert-True ($traceText.Contains("HEAP")) "Missing HEAP instrumentation marker after attach"
+    Assert-True ($traceText.Contains("Current JVM CPU Load")) "Missing CPU monitor trace after attach"
+    Assert-True ($traceText.Contains("GC Stats -")) "Missing GC monitor trace after attach"
+    Assert-True ($traceText.Contains("Thread Stats -")) "Missing Thread monitor trace after attach"
+    Assert-True ($traceText.Contains("ClassLoader Stats -")) "Missing ClassLoader monitor trace after attach"
+    Assert-True ($traceText.Contains("{USED:")) "Missing Heap monitor trace after attach"
 
     $heapDumps = @(Get-ChildItem -Path $traceDir.FullName -Filter "*.hprof" -File -ErrorAction SilentlyContinue)
     Assert-True ($heapDumps.Count -ge 1) "No heap dump file generated after attach"
