@@ -59,7 +59,7 @@ You can attach MonarchJavaAgent either during startup or during runtime.
 Example command to attach the agent:
 
 ```bash 
-java -Xverify:none -Xbootclasspath/a:/path/to/MonarchJavaAgent.jar -javaagent:/path/to/MonarchJavaAgent.jar=configFile=/path/to/config.yaml,agentLogFileDir=/path/to/log/dir,agentLogLevel=DEBUG,smtpProperties=/path/to/smtpProperties.props,agentJarPath=/path/to/MonarchJavaAgent.jar YourMainClass
+java -Xverify:none -javaagent:/path/to/MonarchJavaAgent.jar=configFile=/path/to/config.yaml,agentLogFileDir=/path/to/log/dir,agentLogLevel=DEBUG,smtpProperties=/path/to/smtpProperties.props,agentJarPath=/path/to/MonarchJavaAgent.jar YourMainClass
 ```
 
 **For Runtime:**
@@ -80,7 +80,80 @@ Agent attached successfully to PID 24300
 
 ## Configuration
 
-Below is a sample configuration YAML that you can use with MonarchJavaAgent:
+MonarchJavaAgent now supports a nested, mode-aware YAML structure. Supported modes are:
+
+- `instrumenter`: enable bytecode instrumentation only
+- `observer`: enable JVM observation/metrics only
+- `hybrid`: enable both instrumentation and observer features
+
+Canonical sample configuration:
+
+```yaml
+mode: hybrid
+
+instrumentation:
+  enabled: true
+  configRefreshInterval: 15
+  traceFileLocation: C:\\TraceFileDumps
+  agentRules:
+    - ClassA::methodA@INGRESS::STACK
+    - ClassA::methodA@INGRESS::ARGS
+    - ClassA::methodA@EGRESS::RET
+    - ClassA::methodB@INGRESS::ARGS
+    - ClassA::methodB@INGRESS::STACK::[com.asm]
+    - ClassA::methodB@EGRESS::STACK
+    - ClassA::methodB@EGRESS::RET
+    - ClassB::methodC@PROFILE
+    - ClassB::methodC@INGRESS::HEAP
+    - ClassB::methodC@INGRESS::ADD::[System.out.println(20);]
+    - ClassA::methodA@INGRESS::ADD::[System.out.println(this.getClass().getName());]
+    - ClassA::methodA@CODEPOINT(11)::ADD::[System.out.println(499);]
+    - ClassA::methodA@CODEPOINT(11)::ADD::[System.out.println(499 + "," + "Ashutosh Mishra");]
+
+observer:
+  enabled: true
+  printClassLoaderTrace: true
+  printJVMSystemProperties: true
+  printEnvironmentVariables: true
+  metrics:
+    exposeHttp: true
+    port: 9090
+    heapUsage: true
+    cpuUsage: true
+    threadUsage: true
+    gcStats: true
+    classLoaderStats: true
+
+alerts:
+  enabled: true
+  maxHeapDumps: 3
+  emailRecipientList:
+    - abc@example.com
+    - ashutosh@asm.com
+```
+
+Backward compatibility:
+
+- Legacy flat keys such as `shouldInstrument`, `printJVMHeapUsage`, `exposeMetrics`, and `metricsPort` are still supported.
+- Legacy flat keys are deprecated and now emit warnings during config parsing.
+- If both nested and legacy forms are present for the same setting, the nested value wins.
+
+Current implementation note:
+
+- `instrumentation.traceFileLocation` is still used as the shared trace output root for both instrumentation and observer trace output.
+- For `observer` mode, set `instrumentation.traceFileLocation` as well until trace output is moved to a common/shared config section in a future cleanup.
+
+Launch args remain separate from YAML:
+
+- `configFile`
+- `agentLogFileDir`
+- `agentLogLevel`
+- `smtpProperties`
+- `agentJarPath`
+
+See the checked-in example at [sampleConfig/mConfig.yaml](C:\Users\ashut\Documents\Personal Projects\MonarchJavaAgent\sampleConfig\mConfig.yaml).
+
+Legacy flat example still accepted:
 
 ```yaml
 shouldInstrument: true
@@ -88,21 +161,6 @@ configRefreshInterval: 15
 traceFileLocation: C:\\TraceFileDumps
 agentRules:
   - ClassA::methodA@INGRESS::STACK
-  - ClassA::methodA@INGRESS::ARGS
-  - ClassA::methodA@EGRESS::RET
-  - ClassA::methodB@INGRESS::ARGS
-  - ClassA::methodB@INGRESS::STACK::[com.asm]
-  - ClassA::methodB@EGRESS::STACK
-  - ClassA::methodB@EGRESS::RET
-  - ClassB::methodC@PROFILE
-  - ClassB::methodC@INGRESS::HEAP
-  - ClassB::methodC@INGRESS::ADD::[System.out.println(20);]
-  - ClassA::methodA@INGRESS::ADD::[System.out.println(this.getClass().getName());]
-  - ClassA::methodA@CODEPOINT(11)::ADD::[System.out.println(499);]
-  - ClassA::methodA@CODEPOINT(11)::ADD::[System.out.println(499 + "," + "Ashutosh Mishra");]
-printClassLoaderTrace: true
-printJVMSystemProperties: true
-printEnvironmentVariables: true
 printJVMHeapUsage: true
 printJVMCpuUsage: true
 printJVMThreadUsage: true
@@ -114,7 +172,6 @@ maxHeapDumps: 3
 sendAlertEmails: true
 emailRecipientList:
   - abc@example.com
-  - ashutosh@asm.com
 ```
 
 ## Rule Syntax
@@ -143,7 +200,7 @@ Where:
 
 ## Metrics Endpoint
 
-If `exposeMetrics: true` is enabled in the config, MonarchJavaAgent starts a lightweight HTTP server exposing JVM metrics.
+If `observer.metrics.exposeHttp: true` is enabled in the config, MonarchJavaAgent starts a lightweight HTTP server exposing JVM metrics.
 
 Default endpoints:
 
@@ -184,6 +241,7 @@ The project now includes an integration smoke harness that validates:
 - Heap dump generation
 - Runtime config reload behavior (rule removal stops instrumentation effect without restart)
 - Invalid rule behavior (startup failure for malformed action rules)
+- Nested-vs-legacy config precedence behavior at runtime
 
 ### Prerequisites
 
@@ -212,6 +270,9 @@ powershell -ExecutionPolicy Bypass -File scripts\smoke-config-reload.ps1
 
 # invalid rule behavior check
 powershell -ExecutionPolicy Bypass -File scripts\smoke-invalid-rule.ps1
+
+# nested config overrides legacy flat keys
+powershell -ExecutionPolicy Bypass -File scripts\smoke-config-precedence.ps1
 ```
 
 ### Linux/macOS (Shell)
@@ -237,6 +298,9 @@ bash scripts/smoke-config-reload.sh
 
 # invalid rule behavior check
 bash scripts/smoke-invalid-rule.sh
+
+# nested config overrides legacy flat keys
+bash scripts/smoke-config-precedence.sh
 ```
 
 Smoke run artifacts (trace/log/config) are written to temp run directories under:
