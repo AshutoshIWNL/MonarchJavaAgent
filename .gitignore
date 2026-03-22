@@ -22,6 +22,12 @@
 *.tar.gz
 *.rar
 
+# Maven Shade generated descriptor
+dependency-reduced-pom.xml
+
+# Integration harness run artifacts
+it/run/
+
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
