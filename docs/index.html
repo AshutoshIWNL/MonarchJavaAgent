@@ -5,26 +5,33 @@
 
 <h1 id="monarch-java-agent">Monarch Java Agent</h1>
 
-<p>Monarch is a powerful Java agent for method monitoring and analysis. It offers various features to track method execution time, print stack traces, log method arguments and return values, capture heap dumps, and gather JVM-related information.</p>
+<p>Monarch is a hybrid Java agent for production diagnostics and JVM observation. It lets you attach targeted bytecode instrumentation to a live JVM, expose Prometheus-compatible JVM metrics, and move between instrumenter, observer, and hybrid workflows without changing the application code.</p>
 
 <p>“Arise, shadows of execution!”</p>
+
+<h2 id="why-monarch">Why Monarch</h2>
+
+<p>Use Monarch when you need to:</p>
+
+<ul>
+  <li>inspect a hot method in production without redeploying</li>
+  <li>inject a temporary runtime debug probe to validate a hypothesis</li>
+  <li>expose JVM health signals to Prometheus and Grafana</li>
+  <li>combine traces and metrics during incident response</li>
+</ul>
 
 <h2 id="key-abilities">Key Abilities</h2>
 
 <ul>
-  <li><strong>Shadow Trace Revelation:</strong> Unveil the stack trace upon a method’s invocation, illuminating the path of execution.</li>
-  <li><strong>Shadow Argument Whispers:</strong> Capture and log the arguments passed to a method, discerning the secrets within.</li>
-  <li><strong>Shadow Return Echoes:</strong> Record the return values of methods, listening to the echoes of their completion.</li>
-  <li><strong>Shadow Code Infusion:</strong> Inject your own commands into the flow of execution, altering the very fabric of your application.</li>
-  <li><strong>Shadow Time Capture:</strong> Command the agent to reveal the precise time taken for any method’s execution (Might get Eternal Slumber, beware).</li>
-  <li><strong>Shadow Memory Grasp:</strong> Seize a heap dump at critical moments, capturing the memory landscape.</li>
-  <li><strong>Shadow System Gaze:</strong> Peer into the system flags and JVM options, understanding the environment.</li>
-  <li><strong>Shadow Resource Monitoring:</strong> Track heap and CPU usage, ensuring the shadows remain under control.</li>
-  <li><strong>Shadow Garbage Collector Insight</strong>: Observe the movements of the JVM’s GC, tracking collection counts and times to anticipate system pauses.</li>
-  <li><strong>Shadow Thread Watcher</strong>: Monitor all threads in the JVM, identifying peaks and anomalies like a shadow stalking its prey.</li>
-  <li><strong>Shadow Classloader Vigil</strong>: Track loaded and unloaded classes, class load rates, and Metaspace usage, preventing rogue shadows from overwhelming the system.</li>
-  <li><strong>Shadow Metrics Divination:</strong> Channel live JVM vitals — heap, CPU, GC, threads, and classloaders — through a built-in <code class="language-plaintext highlighter-rouge">/metrics</code> endpoint. Prometheus prophecy arriving soon.</li>
-  <li><strong>Shadow Alert Sentinels:</strong> Deploy alert emails to notify you of critical resource usage, maintaining vigilance.</li>
+  <li><strong>Shadow Trace Revelation:</strong> Unveil the stack trace upon a method’s invocation.</li>
+  <li><strong>Shadow Argument Whispers:</strong> Capture and log the arguments passed to a method.</li>
+  <li><strong>Shadow Return Echoes:</strong> Record the return values of methods.</li>
+  <li><strong>Shadow Code Infusion:</strong> Inject your own diagnostic commands into the flow of execution.</li>
+  <li><strong>Shadow Time Capture:</strong> Measure method execution time.</li>
+  <li><strong>Shadow Memory Grasp:</strong> Seize a heap dump at critical moments.</li>
+  <li><strong>Shadow Resource Monitoring:</strong> Track heap, CPU, GC, thread, and classloader behavior.</li>
+  <li><strong>Shadow Metrics Divination:</strong> Expose Prometheus-compatible JVM metrics at <code class="language-plaintext highlighter-rouge">/metrics</code>.</li>
+  <li><strong>Shadow Alert Sentinels:</strong> Deploy alert emails for critical resource usage.</li>
 </ul>
 
 <h2 id="monargs">MonArgs</h2>
@@ -67,69 +74,82 @@
 <p><strong>For startup:</strong></p>
 
 <ol>
-  <li>Download the latest agent JAR file from releases page.</li>
-  <li>Start your Java application using the <code class="language-plaintext highlighter-rouge">-javaagent</code> option.</li>
-  <li>Specify the configuration file and other options as needed.</li>
+  <li>Download the latest agent JAR file from releases.</li>
+  <li>Start your Java application using <code class="language-plaintext highlighter-rouge">-javaagent</code>.</li>
+  <li>Pass the config file and bootstrap arguments.</li>
 </ol>
 
-<p>Example command to attach the agent:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>java <span class="nt">-Xverify</span>:none <span class="nt">-Xbootclasspath</span>/a:/path/to/MonarchJavaAgent-1.1-SNAPSHOT.jar <span class="nt">-javaagent</span>:/path/to/MonarchJavaAgent-1.1-SNAPSHOT.jar<span class="o">=</span><span class="nv">configFile</span><span class="o">=</span>/path/to/config.yaml,agentLogFileDir<span class="o">=</span>/path/to/log/dir,agentLogLevel<span class="o">=</span>DEBUG,smtpProperties<span class="o">=</span>/path/to/smtpProperties.props YourMainClass
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>java <span class="nt">-Xverify</span>:none <span class="nt">-javaagent</span>:/path/to/MonarchJavaAgent.jar<span class="o">=</span><span class="nv">configFile</span><span class="o">=</span>/path/to/config.yaml,agentLogFileDir<span class="o">=</span>/path/to/log/dir,agentLogLevel<span class="o">=</span>DEBUG,smtpProperties<span class="o">=</span>/path/to/smtpProperties.props,agentJarPath<span class="o">=</span>/path/to/MonarchJavaAgent.jar YourMainClass
 </code></pre></div></div>
 
-<p><strong>For Runtime:</strong></p>
+<p><strong>For runtime attach:</strong></p>
 
 <ol>
-  <li>Download the latest agent JAR file from releases page.</li>
-  <li>Start your application.</li>
-  <li>Run “monarchAgentStart.bat”/”monarchAgentStart.sh” and provide the requested details.</li>
+  <li>Start your application normally.</li>
+  <li>Run <code class="language-plaintext highlighter-rouge">monarchAgentStart.bat</code> or <code class="language-plaintext highlighter-rouge">monarchAgentStart.sh</code>.</li>
+  <li>Provide the agent jar, config file, bootstrap arguments, and target PID.</li>
 </ol>
-
-<p>Example command run:</p>
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>C:<span class="se">\U</span>sers<span class="se">\a</span>shut<span class="se">\m</span>onarch-java-agent<span class="se">\a</span>ttachScript&gt; .<span class="se">\m</span>onarchAgentStart.bat
-Enter path to the agent JAR file: C:<span class="se">\U</span>sers<span class="se">\a</span>shut<span class="se">\m</span>onarch-java-agent<span class="se">\t</span>arget<span class="se">\M</span>onarchJavaAgent-1.1-SNAPSHOT.jar
-Enter path to the agent config file: C:<span class="se">\U</span>sers<span class="se">\a</span>shut<span class="se">\m</span>onarch-java-agent<span class="se">\s</span>ampleConfig<span class="se">\m</span>Config.yaml
-Enter arguments to pass to the agent: <span class="nv">agentLogFileDir</span><span class="o">=</span>C:<span class="se">\U</span>sers<span class="se">\a</span>shut<span class="se">\m</span>anualTesting,agentLogLevel<span class="o">=</span>DEBUG,smtpProperties<span class="o">=</span>/path/to/smtpProperties.props
-Enter PID of the target JVM <span class="o">(</span>press Enter to use current JVM<span class="o">)</span>: 24300
-Agent attached successfully to PID 24300
-</code></pre></div></div>
 
 <h2 id="commanding-the-shadows">Commanding the Shadows</h2>
 
-<p>Below is a sample configuration YAML that you can use with MonarchJavaAgent:</p>
+<p>Monarch supports a nested, mode-aware YAML structure.</p>
 
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">shouldInstrument</span><span class="pi">:</span> <span class="kc">true</span>
-<span class="na">configRefreshInterval</span><span class="pi">:</span> <span class="m">15</span>
-<span class="na">traceFileLocation</span><span class="pi">:</span> <span class="s">C:\\TraceFileDumps</span>
-<span class="na">agentRules</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="s">ClassA::methodA@INGRESS::STACK</span>
-  <span class="pi">-</span> <span class="s">ClassA::methodA@INGRESS::ARGS</span>
-  <span class="pi">-</span> <span class="s">ClassA::methodA@EGRESS::RET</span>
-  <span class="pi">-</span> <span class="s">ClassA::methodB@INGRESS::ARGS</span>
-  <span class="pi">-</span> <span class="s">ClassA::methodB@INGRESS::STACK</span>
-  <span class="pi">-</span> <span class="s">ClassA::methodB@EGRESS::STACK</span>
-  <span class="pi">-</span> <span class="s">ClassA::methodB@EGRESS::RET</span>
-  <span class="pi">-</span> <span class="s">ClassB::methodC@PROFILE</span>
-  <span class="pi">-</span> <span class="s">ClassB::methodC@INGRESS::HEAP</span>
-  <span class="pi">-</span> <span class="s">ClassB::methodC@INGRESS::ADD::[System.out.println(20);]</span>
-  <span class="pi">-</span> <span class="s">ClassA::methodA@INGRESS::ADD::[System.out.println(this.getClass().getName());]</span>
-  <span class="pi">-</span> <span class="s">ClassA::methodA@CODEPOINT(11)::ADD::[System.out.println(499);]</span>
-  <span class="pi">-</span> <span class="s">ClassA::methodA@CODEPOINT(11)::ADD::[System.out.println(499 + "," + "Ashutosh Mishra");]</span>
-<span class="na">printClassLoaderTrace</span><span class="pi">:</span> <span class="kc">true</span>
-<span class="na">printJVMSystemProperties</span><span class="pi">:</span> <span class="kc">true</span>
-<span class="na">printEnvironmentVariables</span><span class="pi">:</span> <span class="kc">true</span>
-<span class="na">printJVMHeapUsage</span><span class="pi">:</span> <span class="kc">true</span>
-<span class="na">printJVMCpuUsage</span><span class="pi">:</span> <span class="kc">true</span>
-<span class="na">maxHeapDumps</span><span class="pi">:</span> <span class="m">3</span>
-<span class="na">sendAlertEmails</span><span class="pi">:</span> <span class="kc">true</span>
-<span class="na">emailRecipientList</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="s">abc@example.com</span>
-  <span class="pi">-</span> <span class="s">ashutosh@asm.com</span>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">instrumenter</code>: bytecode instrumentation only</li>
+  <li><code class="language-plaintext highlighter-rouge">observer</code>: JVM observation and metrics only</li>
+  <li><code class="language-plaintext highlighter-rouge">hybrid</code>: both instrumentation and observer features</li>
+</ul>
+
+<p>Canonical sample configuration:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">mode</span><span class="pi">:</span> <span class="s">hybrid</span>
+
+<span class="na">instrumentation</span><span class="pi">:</span>
+  <span class="na">enabled</span><span class="pi">:</span> <span class="kc">true</span>
+  <span class="na">configRefreshInterval</span><span class="pi">:</span> <span class="m">15</span>
+  <span class="na">traceFileLocation</span><span class="pi">:</span> <span class="s">C:\\TraceFileDumps</span>
+  <span class="na">agentRules</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">ClassA::methodA@INGRESS::STACK</span>
+    <span class="pi">-</span> <span class="s">ClassA::methodA@INGRESS::ARGS</span>
+    <span class="pi">-</span> <span class="s">ClassA::methodA@EGRESS::RET</span>
+    <span class="pi">-</span> <span class="s">ClassA::methodB@INGRESS::ARGS</span>
+    <span class="pi">-</span> <span class="s">ClassA::methodB@INGRESS::STACK::[com.asm]</span>
+    <span class="pi">-</span> <span class="s">ClassA::methodB@EGRESS::STACK</span>
+    <span class="pi">-</span> <span class="s">ClassA::methodB@EGRESS::RET</span>
+    <span class="pi">-</span> <span class="s">ClassB::methodC@PROFILE</span>
+    <span class="pi">-</span> <span class="s">ClassB::methodC@INGRESS::HEAP</span>
+    <span class="pi">-</span> <span class="s">ClassB::methodC@INGRESS::ADD::[System.out.println(20);]</span>
+    <span class="pi">-</span> <span class="s">ClassA::methodA@INGRESS::ADD::[System.out.println(this.getClass().getName());]</span>
+    <span class="pi">-</span> <span class="s">ClassA::methodA@CODEPOINT(11)::ADD::[System.out.println(499);]</span>
+    <span class="pi">-</span> <span class="s">ClassA::methodA@CODEPOINT(11)::ADD::[System.out.println(499 + "," + "Ashutosh Mishra");]</span>
+
+<span class="na">observer</span><span class="pi">:</span>
+  <span class="na">enabled</span><span class="pi">:</span> <span class="kc">true</span>
+  <span class="na">printClassLoaderTrace</span><span class="pi">:</span> <span class="kc">true</span>
+  <span class="na">printJVMSystemProperties</span><span class="pi">:</span> <span class="kc">true</span>
+  <span class="na">printEnvironmentVariables</span><span class="pi">:</span> <span class="kc">true</span>
+  <span class="na">metrics</span><span class="pi">:</span>
+    <span class="na">exposeHttp</span><span class="pi">:</span> <span class="kc">true</span>
+    <span class="na">port</span><span class="pi">:</span> <span class="m">9090</span>
+    <span class="na">heapUsage</span><span class="pi">:</span> <span class="kc">true</span>
+    <span class="na">cpuUsage</span><span class="pi">:</span> <span class="kc">true</span>
+    <span class="na">threadUsage</span><span class="pi">:</span> <span class="kc">true</span>
+    <span class="na">gcStats</span><span class="pi">:</span> <span class="kc">true</span>
+    <span class="na">classLoaderStats</span><span class="pi">:</span> <span class="kc">true</span>
+
+<span class="na">alerts</span><span class="pi">:</span>
+  <span class="na">enabled</span><span class="pi">:</span> <span class="kc">true</span>
+  <span class="na">maxHeapDumps</span><span class="pi">:</span> <span class="m">3</span>
+  <span class="na">emailRecipientList</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">abc@example.com</span>
+    <span class="pi">-</span> <span class="s">ashutosh@asm.com</span>
 </code></pre></div></div>
+
+<p>Legacy flat keys are still accepted, but nested config is the default and takes precedence when both forms are present.</p>
 
 <h2 id="the-monarchs-decrees">The Monarch’s Decrees</h2>
 
-<p>The rule syntax for MonarchJavaAgent follows the format:</p>
+<p>Rule syntax:</p>
 
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;FQCN&gt;::&lt;MethodName&gt;@&lt;EVENT&gt;::&lt;ACTION&gt;
 </code></pre></div></div>
@@ -137,51 +157,50 @@ Agent attached successfully to PID 24300
 <p>Where:</p>
 
 <ul>
-  <li><code class="language-plaintext highlighter-rouge">&lt;FQCN&gt;</code>: Fully Qualified Class Name.</li>
-  <li><code class="language-plaintext highlighter-rouge">&lt;MethodName&gt;</code>: Name of the method.</li>
-  <li><code class="language-plaintext highlighter-rouge">&lt;EVENT&gt;</code>: Event at which the action should be performed. Possible values are:
-    <ul>
-      <li>INGRESS</li>
-      <li>EGRESS</li>
-      <li>CODEPOINT</li>
-      <li>PROFILE (Note: PROFILE is a special case and no ACTION is required along with it.)</li>
-    </ul>
-  </li>
-  <li><code class="language-plaintext highlighter-rouge">&lt;ACTION&gt;</code>: Action to be performed. Possible values are:
-    <ul>
-      <li>STACK: Print stack trace.</li>
-      <li>HEAP: Capture heap dump.</li>
-      <li>ARGS: Log method arguments.</li>
-      <li>RET: Log method return value.</li>
-      <li>ADD: Add custom code.</li>
-    </ul>
-  </li>
+  <li><code class="language-plaintext highlighter-rouge">&lt;FQCN&gt;</code> is the fully qualified class name</li>
+  <li><code class="language-plaintext highlighter-rouge">&lt;MethodName&gt;</code> is the method name</li>
+  <li><code class="language-plaintext highlighter-rouge">&lt;EVENT&gt;</code> is one of <code class="language-plaintext highlighter-rouge">INGRESS</code>, <code class="language-plaintext highlighter-rouge">EGRESS</code>, <code class="language-plaintext highlighter-rouge">CODEPOINT</code>, <code class="language-plaintext highlighter-rouge">PROFILE</code></li>
+  <li><code class="language-plaintext highlighter-rouge">&lt;ACTION&gt;</code> is one of <code class="language-plaintext highlighter-rouge">STACK</code>, <code class="language-plaintext highlighter-rouge">HEAP</code>, <code class="language-plaintext highlighter-rouge">ARGS</code>, <code class="language-plaintext highlighter-rouge">RET</code>, <code class="language-plaintext highlighter-rouge">ADD</code></li>
 </ul>
 
 <h2 id="shadow-metrics-gate">Shadow Metrics Gate</h2>
 
-<p>If <code class="language-plaintext highlighter-rouge">exposeMetrics: true</code> is declared in your scroll of configuration,
-MonarchJavaAgent summons a spectral gateway — a lightweight HTTP server that exposes the heartbeat of your JVM in real time.</p>
+<p>If <code class="language-plaintext highlighter-rouge">observer.metrics.exposeHttp: true</code> is enabled, Monarch starts a lightweight HTTP server exposing JVM metrics.</p>
 
-<p>Default Rift:
-http://localhost:9090/metrics</p>
-
-<p>Through this rift, the agent unveils:</p>
+<p>Default endpoints:</p>
 
 <ul>
-  <li>Heap usage</li>
-  <li>CPU load</li>
-  <li>GC stats</li>
-  <li>Thread stats</li>
-  <li>Classloader stats</li>
-  <li>Agent info + timestamp</li>
+  <li><code class="language-plaintext highlighter-rouge">http://localhost:9090/metrics</code></li>
+  <li><code class="language-plaintext highlighter-rouge">http://localhost:9090/metrics.json</code></li>
 </ul>
 
-<p>Soon, in the next ascension, the agent will unlock Prometheus-tier incantations — <code class="language-plaintext highlighter-rouge">/metrics</code> in true Prometheus format, granting interoperability with realms of dashboards and sentinels.</p>
+<p>Prometheus scrape config:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">global</span><span class="pi">:</span>
+  <span class="na">scrape_interval</span><span class="pi">:</span> <span class="s">5s</span>
+
+<span class="na">scrape_configs</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="na">job_name</span><span class="pi">:</span> <span class="s2">"</span><span class="s">monarch-java-agent"</span>
+    <span class="na">static_configs</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">targets</span><span class="pi">:</span> <span class="pi">[</span><span class="s2">"</span><span class="s">127.0.0.1:9090"</span><span class="pi">]</span>
+</code></pre></div></div>
+
+<p>Common Prometheus queries:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">monarch_jvm_heap_used_bytes</code></li>
+  <li><code class="language-plaintext highlighter-rouge">monarch_jvm_cpu_process_percent</code></li>
+  <li><code class="language-plaintext highlighter-rouge">monarch_jvm_threads_current</code></li>
+  <li><code class="language-plaintext highlighter-rouge">monarch_jvm_classloader_loaded</code></li>
+</ul>
+
+<p>Example Grafana dashboard:</p>
+
+<p><img src="grafana-dashboard.png.jpg" alt="Grafana dashboard for MonarchJavaAgent metrics" /></p>
 
 <h2 id="forging-the-shadow">Forging the Shadow</h2>
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git https://github.com/AshutoshIWNL/MonarchJavaAgent.git
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/AshutoshIWNL/MonarchJavaAgent.git
 <span class="nb">cd </span>MonarchJavaAgent
 mvn clean package
 </code></pre></div></div>

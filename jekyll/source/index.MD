@@ -5,38 +5,43 @@ theme: null
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/AshutoshIWNL/MonarchJavaAgent)
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="stylesheet" type="text/css" href="style.css">
+
 # Monarch Java Agent
 
-Monarch is a powerful Java agent for method monitoring and analysis. It offers various features to track method execution time, print stack traces, log method arguments and return values, capture heap dumps, and gather JVM-related information.
+Monarch is a hybrid Java agent for production diagnostics and JVM observation. It lets you attach targeted bytecode instrumentation to a live JVM, expose Prometheus-compatible JVM metrics, and move between instrumenter, observer, and hybrid workflows without changing the application code.
 
 "Arise, shadows of execution!"
 
+## Why Monarch
+
+Use Monarch when you need to:
+
+* inspect a hot method in production without redeploying
+* inject a temporary runtime debug probe to validate a hypothesis
+* expose JVM health signals to Prometheus and Grafana
+* combine traces and metrics during incident response
+
 ## Key Abilities
 
-* **Shadow Trace Revelation:** Unveil the stack trace upon a method's invocation, illuminating the path of execution.
-* **Shadow Argument Whispers:** Capture and log the arguments passed to a method, discerning the secrets within.
-* **Shadow Return Echoes:** Record the return values of methods, listening to the echoes of their completion.
-* **Shadow Code Infusion:** Inject your own commands into the flow of execution, altering the very fabric of your application.
-* **Shadow Time Capture:** Command the agent to reveal the precise time taken for any method's execution (Might get Eternal Slumber, beware).
-* **Shadow Memory Grasp:** Seize a heap dump at critical moments, capturing the memory landscape.
-* **Shadow System Gaze:** Peer into the system flags and JVM options, understanding the environment.
-* **Shadow Resource Monitoring:** Track heap and CPU usage, ensuring the shadows remain under control.
-* **Shadow Garbage Collector Insight**: Observe the movements of the JVM's GC, tracking collection counts and times to anticipate system pauses.
-* **Shadow Thread Watcher**: Monitor all threads in the JVM, identifying peaks and anomalies like a shadow stalking its prey.
-* **Shadow Classloader Vigil**: Track loaded and unloaded classes, class load rates, and Metaspace usage, preventing rogue shadows from overwhelming the system.
-* **Shadow Metrics Divination:** Channel live JVM vitals — heap, CPU, GC, threads, and classloaders — through a built-in `/metrics` endpoint. Prometheus prophecy arriving soon.
-* **Shadow Alert Sentinels:** Deploy alert emails to notify you of critical resource usage, maintaining vigilance.
+* **Shadow Trace Revelation:** Unveil the stack trace upon a method's invocation.
+* **Shadow Argument Whispers:** Capture and log the arguments passed to a method.
+* **Shadow Return Echoes:** Record the return values of methods.
+* **Shadow Code Infusion:** Inject your own diagnostic commands into the flow of execution.
+* **Shadow Time Capture:** Measure method execution time.
+* **Shadow Memory Grasp:** Seize a heap dump at critical moments.
+* **Shadow Resource Monitoring:** Track heap, CPU, GC, thread, and classloader behavior.
+* **Shadow Metrics Divination:** Expose Prometheus-compatible JVM metrics at `/metrics`.
+* **Shadow Alert Sentinels:** Deploy alert emails for critical resource usage.
 
 ## MonArgs
 
-| Argument        | Description                                                               |
-|----------------|---------------------------------------------------------------------------|
-|`configFile`      | Path to the configuration file specifying agent behavior **[Mandatory]**. |
-| `agentLogFileDir` | Directory where initialization logs will be written.                      |
-| `agentLogLevel` | Log verbosity level (`DEBUG`, `INFO`, `WARN`, `ERROR`).                   |
-| `smtpProperties` | Path to SMTP configuration for sending alert emails.                      |
-| `agentJarPath`    | Path to the MonarchJavaAgent jar **[Mandatory for startup attach]**.      |
-
+| Argument | Description |
+|---|---|
+| `configFile` | Path to the configuration file specifying agent behavior **[Mandatory]**. |
+| `agentLogFileDir` | Directory where initialization logs will be written. |
+| `agentLogLevel` | Log verbosity level (`DEBUG`, `INFO`, `WARN`, `ERROR`). |
+| `smtpProperties` | Path to SMTP configuration for sending alert emails. |
+| `agentJarPath` | Path to the MonarchJavaAgent jar **[Mandatory for startup attach]**. |
 
 ## Summoning the Monarch
 
@@ -44,69 +49,79 @@ You can attach MonarchJavaAgent either during startup or during runtime.
 
 **For startup:**
 
-1. Download the latest agent JAR file from releases page.
-2. Start your Java application using the `-javaagent` option.
-3. Specify the configuration file and other options as needed.
+1. Download the latest agent JAR file from releases.
+2. Start your Java application using `-javaagent`.
+3. Pass the config file and bootstrap arguments.
 
-Example command to attach the agent:
-
-```bash 
-java -Xverify:none -Xbootclasspath/a:/path/to/MonarchJavaAgent-1.1-SNAPSHOT.jar -javaagent:/path/to/MonarchJavaAgent-1.1-SNAPSHOT.jar=configFile=/path/to/config.yaml,agentLogFileDir=/path/to/log/dir,agentLogLevel=DEBUG,smtpProperties=/path/to/smtpProperties.props YourMainClass
+```bash
+java -Xverify:none -javaagent:/path/to/MonarchJavaAgent.jar=configFile=/path/to/config.yaml,agentLogFileDir=/path/to/log/dir,agentLogLevel=DEBUG,smtpProperties=/path/to/smtpProperties.props,agentJarPath=/path/to/MonarchJavaAgent.jar YourMainClass
 ```
 
-**For Runtime:**
+**For runtime attach:**
 
-1. Download the latest agent JAR file from releases page.
-2. Start your application.
-3. Run "monarchAgentStart.bat"/"monarchAgentStart.sh" and provide the requested details.
-
-Example command run:
-```bash 
-C:\Users\ashut\monarch-java-agent\attachScript> .\monarchAgentStart.bat
-Enter path to the agent JAR file: C:\Users\ashut\monarch-java-agent\target\MonarchJavaAgent-1.1-SNAPSHOT.jar
-Enter path to the agent config file: C:\Users\ashut\monarch-java-agent\sampleConfig\mConfig.yaml
-Enter arguments to pass to the agent: agentLogFileDir=C:\Users\ashut\manualTesting,agentLogLevel=DEBUG,smtpProperties=/path/to/smtpProperties.props
-Enter PID of the target JVM (press Enter to use current JVM): 24300
-Agent attached successfully to PID 24300
-```
+1. Start your application normally.
+2. Run `monarchAgentStart.bat` or `monarchAgentStart.sh`.
+3. Provide the agent jar, config file, bootstrap arguments, and target PID.
 
 ## Commanding the Shadows
 
-Below is a sample configuration YAML that you can use with MonarchJavaAgent:
+Monarch supports a nested, mode-aware YAML structure.
+
+* `instrumenter`: bytecode instrumentation only
+* `observer`: JVM observation and metrics only
+* `hybrid`: both instrumentation and observer features
+
+Canonical sample configuration:
 
 ```yaml
-shouldInstrument: true
-configRefreshInterval: 15
-traceFileLocation: C:\\TraceFileDumps
-agentRules:
-  - ClassA::methodA@INGRESS::STACK
-  - ClassA::methodA@INGRESS::ARGS
-  - ClassA::methodA@EGRESS::RET
-  - ClassA::methodB@INGRESS::ARGS
-  - ClassA::methodB@INGRESS::STACK
-  - ClassA::methodB@EGRESS::STACK
-  - ClassA::methodB@EGRESS::RET
-  - ClassB::methodC@PROFILE
-  - ClassB::methodC@INGRESS::HEAP
-  - ClassB::methodC@INGRESS::ADD::[System.out.println(20);]
-  - ClassA::methodA@INGRESS::ADD::[System.out.println(this.getClass().getName());]
-  - ClassA::methodA@CODEPOINT(11)::ADD::[System.out.println(499);]
-  - ClassA::methodA@CODEPOINT(11)::ADD::[System.out.println(499 + "," + "Ashutosh Mishra");]
-printClassLoaderTrace: true
-printJVMSystemProperties: true
-printEnvironmentVariables: true
-printJVMHeapUsage: true
-printJVMCpuUsage: true
-maxHeapDumps: 3
-sendAlertEmails: true
-emailRecipientList:
-  - abc@example.com
-  - ashutosh@asm.com
+mode: hybrid
+
+instrumentation:
+  enabled: true
+  configRefreshInterval: 15
+  traceFileLocation: C:\\TraceFileDumps
+  agentRules:
+    - ClassA::methodA@INGRESS::STACK
+    - ClassA::methodA@INGRESS::ARGS
+    - ClassA::methodA@EGRESS::RET
+    - ClassA::methodB@INGRESS::ARGS
+    - ClassA::methodB@INGRESS::STACK::[com.asm]
+    - ClassA::methodB@EGRESS::STACK
+    - ClassA::methodB@EGRESS::RET
+    - ClassB::methodC@PROFILE
+    - ClassB::methodC@INGRESS::HEAP
+    - ClassB::methodC@INGRESS::ADD::[System.out.println(20);]
+    - ClassA::methodA@INGRESS::ADD::[System.out.println(this.getClass().getName());]
+    - ClassA::methodA@CODEPOINT(11)::ADD::[System.out.println(499);]
+    - ClassA::methodA@CODEPOINT(11)::ADD::[System.out.println(499 + "," + "Ashutosh Mishra");]
+
+observer:
+  enabled: true
+  printClassLoaderTrace: true
+  printJVMSystemProperties: true
+  printEnvironmentVariables: true
+  metrics:
+    exposeHttp: true
+    port: 9090
+    heapUsage: true
+    cpuUsage: true
+    threadUsage: true
+    gcStats: true
+    classLoaderStats: true
+
+alerts:
+  enabled: true
+  maxHeapDumps: 3
+  emailRecipientList:
+    - abc@example.com
+    - ashutosh@asm.com
 ```
+
+Legacy flat keys are still accepted, but nested config is the default and takes precedence when both forms are present.
 
 ## The Monarch's Decrees
 
-The rule syntax for MonarchJavaAgent follows the format:
+Rule syntax:
 
 ```plaintext
 <FQCN>::<MethodName>@<EVENT>::<ACTION>
@@ -114,51 +129,54 @@ The rule syntax for MonarchJavaAgent follows the format:
 
 Where:
 
-- `<FQCN>`: Fully Qualified Class Name.
-- `<MethodName>`: Name of the method.
-- `<EVENT>`: Event at which the action should be performed. Possible values are:
-    - INGRESS
-    - EGRESS
-    - CODEPOINT
-    - PROFILE (Note: PROFILE is a special case and no ACTION is required along with it.)
-- `<ACTION>`: Action to be performed. Possible values are:
-    - STACK: Print stack trace.
-    - HEAP: Capture heap dump.
-    - ARGS: Log method arguments.
-    - RET: Log method return value.
-    - ADD: Add custom code.
-
+* `<FQCN>` is the fully qualified class name
+* `<MethodName>` is the method name
+* `<EVENT>` is one of `INGRESS`, `EGRESS`, `CODEPOINT`, `PROFILE`
+* `<ACTION>` is one of `STACK`, `HEAP`, `ARGS`, `RET`, `ADD`
 
 ## Shadow Metrics Gate
 
-If `exposeMetrics: true` is declared in your scroll of configuration,
-MonarchJavaAgent summons a spectral gateway — a lightweight HTTP server that exposes the heartbeat of your JVM in real time.
+If `observer.metrics.exposeHttp: true` is enabled, Monarch starts a lightweight HTTP server exposing JVM metrics.
 
-Default Rift:
-http://localhost:9090/metrics
+Default endpoints:
 
-Through this rift, the agent unveils:
+* `http://localhost:9090/metrics`
+* `http://localhost:9090/metrics.json`
 
-- Heap usage
-- CPU load
-- GC stats
-- Thread stats
-- Classloader stats
-- Agent info + timestamp
+Prometheus scrape config:
 
-Soon, in the next ascension, the agent will unlock Prometheus-tier incantations — `/metrics` in true Prometheus format, granting interoperability with realms of dashboards and sentinels.
+```yaml
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: "monarch-java-agent"
+    static_configs:
+      - targets: ["127.0.0.1:9090"]
+```
+
+Common Prometheus queries:
+
+* `monarch_jvm_heap_used_bytes`
+* `monarch_jvm_cpu_process_percent`
+* `monarch_jvm_threads_current`
+* `monarch_jvm_classloader_loaded`
+
+Example Grafana dashboard:
+
+![Grafana dashboard for MonarchJavaAgent metrics](grafana-dashboard.png.jpg)
 
 ## Forging the Shadow
 
 ```bash
-git https://github.com/AshutoshIWNL/MonarchJavaAgent.git
+git clone https://github.com/AshutoshIWNL/MonarchJavaAgent.git
 cd MonarchJavaAgent
 mvn clean package
 ```
 
 ## The Architect of Shadows
 
-- **Ashutosh Mishra** (https://github.com/AshutoshIWNL)
+* **Ashutosh Mishra** (https://github.com/AshutoshIWNL)
 
 ## The Shadow's Pact
 

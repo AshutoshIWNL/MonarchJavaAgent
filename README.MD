@@ -1,6 +1,13 @@
 # MonarchJavaAgent
 
-MonarchJavaAgent is a powerful Java agent for method monitoring and analysis. It offers various features to track method execution time, print stack traces, log method arguments and return values, capture heap dumps, and gather JVM-related information.
+MonarchJavaAgent is a hybrid Java agent for production diagnostics and JVM observation. It lets you attach targeted bytecode instrumentation to a live JVM, expose Prometheus-compatible JVM metrics, and use runtime configuration to move between instrumenter, observer, and hybrid workflows without changing the application code.
+
+This is useful when you need to:
+
+- inspect a hot method in production without redeploying
+- inject a temporary diagnostic probe to validate a runtime hypothesis
+- expose JVM health signals to Prometheus and Grafana
+- combine runtime traces with monitoring data during incident response
 
 ## Features
 
@@ -18,6 +25,13 @@ MonarchJavaAgent is a powerful Java agent for method monitoring and analysis. It
 - **JVM Classloader Stats**: Print JVM class loading stats including loaded/unloaded classes, class load rate, and Metaspace usage.
 - **Metrics HTTP Endpoint**: Exposes JVM metrics (heap, GC, threads, CPU, classloader) via a built-in `/metrics` endpoint in Prometheus text format, with OpenMetrics negotiation support and JSON compatibility at `/metrics.json`.
 - **Alert Emails**: Sends alert emails for high heap usage, high CPU usage, thread deadlock, high classloading, etc. in the target application. 
+
+## Production Use Cases
+
+- Attach to a live JVM and trace method arguments, return values, or stack frames on a hot path.
+- Add a temporary runtime debug probe with `ADD` or `CODEPOINT` rules to confirm an application hypothesis.
+- Run in `observer` mode to expose JVM metrics to Prometheus without enabling bytecode instrumentation.
+- Run in `hybrid` mode to combine targeted instrumentation and scrapeable metrics during incident investigation.
 
 ## Architecture (Current)
 
@@ -221,6 +235,33 @@ Exported metrics include:
 - Thread stats
 - Classloader stats
 - Agent info + scrape timestamp
+
+## Prometheus And Grafana
+
+MonarchJavaAgent fits cleanly into a standard Prometheus and Grafana stack. Prometheus scrapes Monarch's `/metrics` endpoint, and Grafana visualizes the exported JVM signals without requiring a separate exporter.
+
+Minimal Prometheus scrape config:
+
+```yaml
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: "monarch-java-agent"
+    static_configs:
+      - targets: ["127.0.0.1:9090"]
+```
+
+Common Prometheus queries:
+
+- `monarch_jvm_heap_used_bytes`
+- `monarch_jvm_cpu_process_percent`
+- `monarch_jvm_threads_current`
+- `monarch_jvm_classloader_loaded`
+
+Example Grafana dashboard using Monarch metrics:
+
+![Grafana dashboard for MonarchJavaAgent metrics](docs/grafana-dashboard.png.jpg)
 
 ## Building from Source
 
