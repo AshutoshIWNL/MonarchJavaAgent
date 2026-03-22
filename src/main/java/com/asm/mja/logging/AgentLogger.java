@@ -99,6 +99,10 @@ public class AgentLogger {
         close();
     }
 
+    public static boolean isInitialized() {
+        return writer != null && globalLogLevel != null;
+    }
+
     /**
      * Dumps the stack trace of an exception to the log file.
      *

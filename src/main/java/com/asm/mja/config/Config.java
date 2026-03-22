@@ -9,6 +9,12 @@ import java.util.List;
  */
 
 public class Config {
+    private AgentMode mode;
+    private InstrumentationConfig instrumentation;
+    private ObserverConfig observer;
+    private AlertsConfig alerts;
+    private LoggingConfig logging;
+
     private String traceFileLocation;
     private HashSet<String> agentRules;
     private boolean printClassLoaderTrace;
@@ -28,6 +34,10 @@ public class Config {
     private List<String> emailRecipientList;
 
     public String getTraceFileLocation() {
+        if (instrumentation != null && instrumentation.getTraceFileLocation() != null
+                && !instrumentation.getTraceFileLocation().isEmpty()) {
+            return instrumentation.getTraceFileLocation();
+        }
         return traceFileLocation;
     }
 
@@ -36,6 +46,9 @@ public class Config {
     }
 
     public HashSet<String> getAgentRules() {
+        if (instrumentation != null && instrumentation.getAgentRules() != null) {
+            return instrumentation.getAgentRules();
+        }
         return agentRules;
     }
 
@@ -44,6 +57,9 @@ public class Config {
     }
 
     public boolean isPrintClassLoaderTrace() {
+        if (observer != null && observer.getPrintClassLoaderTrace() != null) {
+            return observer.getPrintClassLoaderTrace();
+        }
         return printClassLoaderTrace;
     }
 
@@ -52,6 +68,9 @@ public class Config {
     }
 
     public boolean isPrintJVMHeapUsage() {
+        if (observer != null && observer.getMetrics() != null && observer.getMetrics().getHeapUsage() != null) {
+            return observer.getMetrics().getHeapUsage();
+        }
         return printJVMHeapUsage;
     }
 
@@ -60,6 +79,9 @@ public class Config {
     }
 
     public boolean isPrintJVMCpuUsage() {
+        if (observer != null && observer.getMetrics() != null && observer.getMetrics().getCpuUsage() != null) {
+            return observer.getMetrics().getCpuUsage();
+        }
         return printJVMCpuUsage;
     }
 
@@ -68,6 +90,9 @@ public class Config {
     }
 
     public boolean isPrintJVMThreadUsage() {
+        if (observer != null && observer.getMetrics() != null && observer.getMetrics().getThreadUsage() != null) {
+            return observer.getMetrics().getThreadUsage();
+        }
         return printJVMThreadUsage;
     }
 
@@ -76,6 +101,9 @@ public class Config {
     }
 
     public boolean isPrintJVMGCStats() {
+        if (observer != null && observer.getMetrics() != null && observer.getMetrics().getGcStats() != null) {
+            return observer.getMetrics().getGcStats();
+        }
         return printJVMGCStats;
     }
 
@@ -84,6 +112,9 @@ public class Config {
     }
 
     public boolean isPrintJVMClassLoaderStats() {
+        if (observer != null && observer.getMetrics() != null && observer.getMetrics().getClassLoaderStats() != null) {
+            return observer.getMetrics().getClassLoaderStats();
+        }
         return printJVMClassLoaderStats;
     }
 
@@ -92,6 +123,9 @@ public class Config {
     }
 
     public boolean isPrintJVMSystemProperties() {
+        if (observer != null && observer.getPrintJVMSystemProperties() != null) {
+            return observer.getPrintJVMSystemProperties();
+        }
         return printJVMSystemProperties;
     }
 
@@ -100,6 +134,9 @@ public class Config {
     }
 
     public boolean isPrintEnvironmentVariables() {
+        if (observer != null && observer.getPrintEnvironmentVariables() != null) {
+            return observer.getPrintEnvironmentVariables();
+        }
         return printEnvironmentVariables;
     }
 
@@ -108,6 +145,9 @@ public class Config {
     }
 
     public boolean isSendAlertEmails() {
+        if (alerts != null && alerts.getEnabled() != null) {
+            return alerts.getEnabled();
+        }
         return sendAlertEmails;
     }
 
@@ -116,6 +156,9 @@ public class Config {
     }
 
     public int getMaxHeapDumps() {
+        if (alerts != null && alerts.getMaxHeapDumps() != null) {
+            return alerts.getMaxHeapDumps();
+        }
         return maxHeapDumps;
     }
 
@@ -124,6 +167,9 @@ public class Config {
     }
 
     public boolean isShouldInstrument() {
+        if (instrumentation != null && instrumentation.getEnabled() != null) {
+            return instrumentation.getEnabled();
+        }
         return shouldInstrument;
     }
 
@@ -132,6 +178,9 @@ public class Config {
     }
 
     public int getConfigRefreshInterval() {
+        if (instrumentation != null && instrumentation.getConfigRefreshInterval() != null) {
+            return instrumentation.getConfigRefreshInterval();
+        }
         return configRefreshInterval;
     }
 
@@ -140,6 +189,9 @@ public class Config {
     }
 
     public List<String> getEmailRecipientList() {
+        if (alerts != null && alerts.getEmailRecipientList() != null) {
+            return alerts.getEmailRecipientList();
+        }
         return emailRecipientList;
     }
 
@@ -148,6 +200,9 @@ public class Config {
     }
 
     public boolean isExposeMetrics() {
+        if (observer != null && observer.getMetrics() != null && observer.getMetrics().getExposeHttp() != null) {
+            return observer.getMetrics().getExposeHttp();
+        }
         return exposeMetrics;
     }
 
@@ -156,6 +211,9 @@ public class Config {
     }
 
     public int getMetricsPort() {
+        if (observer != null && observer.getMetrics() != null && observer.getMetrics().getPort() != null) {
+            return observer.getMetrics().getPort();
+        }
         return metricsPort;
     }
 
@@ -163,10 +221,93 @@ public class Config {
         this.metricsPort = metricsPort;
     }
 
+    public AgentMode getMode() {
+        return mode;
+    }
+
+    public void setMode(AgentMode mode) {
+        this.mode = mode;
+    }
+
+    public InstrumentationConfig getInstrumentation() {
+        return instrumentation;
+    }
+
+    public void setInstrumentation(InstrumentationConfig instrumentation) {
+        this.instrumentation = instrumentation;
+    }
+
+    public ObserverConfig getObserver() {
+        return observer;
+    }
+
+    public void setObserver(ObserverConfig observer) {
+        this.observer = observer;
+    }
+
+    public AlertsConfig getAlerts() {
+        return alerts;
+    }
+
+    public void setAlerts(AlertsConfig alerts) {
+        this.alerts = alerts;
+    }
+
+    public LoggingConfig getLogging() {
+        return logging;
+    }
+
+    public void setLogging(LoggingConfig logging) {
+        this.logging = logging;
+    }
+
+    public AgentMode getResolvedMode() {
+        return mode != null ? mode : AgentMode.HYBRID;
+    }
+
+    public boolean isInstrumentationActive() {
+        AgentMode resolvedMode = getResolvedMode();
+        if (resolvedMode == AgentMode.OBSERVER) {
+            return false;
+        }
+        return isShouldInstrument();
+    }
+
+    public boolean isObserverActive() {
+        AgentMode resolvedMode = getResolvedMode();
+        if (resolvedMode == AgentMode.INSTRUMENTER) {
+            return false;
+        }
+        if (observer != null && observer.getEnabled() != null) {
+            return observer.getEnabled();
+        }
+        return isPrintClassLoaderTrace()
+                || isPrintJVMHeapUsage()
+                || isPrintJVMCpuUsage()
+                || isPrintJVMThreadUsage()
+                || isPrintJVMGCStats()
+                || isPrintJVMClassLoaderStats()
+                || isPrintJVMSystemProperties()
+                || isPrintEnvironmentVariables()
+                || isExposeMetrics();
+    }
+
+    public boolean isAlertsActive() {
+        if (alerts != null && alerts.getEnabled() != null) {
+            return alerts.getEnabled();
+        }
+        return isSendAlertEmails();
+    }
+
     @Override
     public String toString() {
         return "Config{" +
-                "traceFileLocation='" + traceFileLocation + '\'' +
+                "mode=" + mode +
+                ", instrumentation=" + instrumentation +
+                ", observer=" + observer +
+                ", alerts=" + alerts +
+                ", logging=" + logging +
+                ", traceFileLocation='" + traceFileLocation + '\'' +
                 ", agentRules=" + agentRules +
                 ", printClassLoaderTrace=" + printClassLoaderTrace +
                 ", printJVMHeapUsage=" + printJVMHeapUsage +
