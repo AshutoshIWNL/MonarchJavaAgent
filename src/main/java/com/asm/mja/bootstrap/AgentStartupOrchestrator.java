@@ -25,7 +25,7 @@ import java.util.List;
  */
 public class AgentStartupOrchestrator {
     private static final String AGENT_NAME = "Monarch";
-    private static final String VERSION = "1.1";
+    private static final String VERSION = "1.2";
 
     private AgentStartupOrchestrator() {
     }

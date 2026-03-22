@@ -85,7 +85,7 @@ java -Xverify:none -javaagent:/path/to/MonarchJavaAgent.jar=configFile=/path/to/
 Example command run:
 ```bash 
 C:\Users\ashut\monarch-java-agent\attachScript> .\monarchAgentStart.bat
-Enter path to the agent JAR file: C:\Users\ashut\monarch-java-agent\target\monarch-java-agent-1.1-SNAPSHOT.jar
+Enter path to the agent JAR file: C:\Users\ashut\monarch-java-agent\target\MonarchJavaAgent-1.2.jar
 Enter path to the agent config file: C:\Users\ashut\monarch-java-agent\sampleConfig\mConfig.yaml
 Enter arguments to pass to the agent: agentLogFileDir=C:\Users\ashut\manualTesting,agentLogLevel=DEBUG,smtpProperties=/path/to/smtpProperties.props
 Enter PID of the target JVM (press Enter to use current JVM): 24300
