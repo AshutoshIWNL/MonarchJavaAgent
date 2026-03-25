@@ -24,11 +24,24 @@ public class MetricsSnapshot {
         return instance;
     }
 
-    public void updateGCMetrics(String gcName, long collectionCount, long collectionTime, double gcTimePercent) {
+    public void updateGCMetrics(String gcName,
+                                long collectionCount,
+                                long collectionTime,
+                                double gcTimePercent,
+                                long totalCollectionCount,
+                                long totalCollectionTimeMillis,
+                                double collectionCountPerSecond,
+                                double collectionTimeSecondsPerSecond,
+                                double intervalSeconds) {
         Map<String, Object> gcData = new HashMap<>();
         gcData.put("collectionCount", collectionCount);
         gcData.put("collectionTime", collectionTime);
         gcData.put("gcTimePercent", gcTimePercent);
+        gcData.put("totalCollectionCount", totalCollectionCount);
+        gcData.put("totalCollectionTimeMillis", totalCollectionTimeMillis);
+        gcData.put("collectionCountPerSecond", collectionCountPerSecond);
+        gcData.put("collectionTimeSecondsPerSecond", collectionTimeSecondsPerSecond);
+        gcData.put("intervalSeconds", intervalSeconds);
         gcMetrics.put(gcName, gcData);
     }
 

@@ -52,7 +52,7 @@ public class JVMGCMonitor extends AbstractMonitor {
         while (true) {
             try {
                 long currentTime = System.currentTimeMillis();
-                long elapsedTime = currentTime - previousCheckTime;
+                long elapsedTime = Math.max(1, currentTime - previousCheckTime);
 
                 StringBuilder gcStats = new StringBuilder("GC Stats - ");
                 long totalGCTime = 0;
@@ -62,11 +62,17 @@ public class JVMGCMonitor extends AbstractMonitor {
                     long gcCount = gcBean.getCollectionCount();
                     long gcTime = gcBean.getCollectionTime();
 
-                    long prevCount = previousGCCount.getOrDefault(gcName, 0L);
-                    long prevTime = previousGCTime.getOrDefault(gcName, 0L);
+                    Long previousCountValue = previousGCCount.get(gcName);
+                    Long previousTimeValue = previousGCTime.get(gcName);
+                    long prevCount = previousCountValue != null ? previousCountValue : gcCount;
+                    long prevTime = previousTimeValue != null ? previousTimeValue : gcTime;
 
                     long countDiff = gcCount - prevCount;
                     long timeDiff = gcTime - prevTime;
+                    double elapsedSeconds = elapsedTime / 1000.0;
+                    if (elapsedSeconds <= 0) {
+                        elapsedSeconds = 0.001;
+                    }
 
                     gcStats.append(String.format("%s: %d collections, %dms | ",
                             gcName, countDiff, timeDiff));
@@ -78,7 +84,12 @@ public class JVMGCMonitor extends AbstractMonitor {
                                 gcName,
                                 countDiff,
                                 timeDiff,
-                                (double) timeDiff * 100.0 / elapsedTime
+                                (double) timeDiff * 100.0 / elapsedTime,
+                                gcCount,
+                                gcTime,
+                                countDiff / elapsedSeconds,
+                                (timeDiff / 1000.0) / elapsedSeconds,
+                                elapsedSeconds
                         );
                     }
 

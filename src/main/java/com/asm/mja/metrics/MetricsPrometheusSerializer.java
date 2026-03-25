@@ -56,6 +56,11 @@ public class MetricsPrometheusSerializer {
         appendHelpType(sb, "monarch_jvm_gc_collection_count_interval", "GC collections in the last monitor interval", "gauge");
         appendHelpType(sb, "monarch_jvm_gc_collection_time_millis_interval", "GC collection time in ms in the last monitor interval", "gauge");
         appendHelpType(sb, "monarch_jvm_gc_time_percent_interval", "GC time percent in the last monitor interval", "gauge");
+        appendHelpType(sb, "monarch_jvm_gc_collection_count_total", "Total GC collections since JVM start", "counter");
+        appendHelpType(sb, "monarch_jvm_gc_collection_time_seconds_total", "Total GC collection time in seconds since JVM start", "counter");
+        appendHelpType(sb, "monarch_jvm_gc_collection_count_per_second", "GC collections per second over the last monitor interval", "gauge");
+        appendHelpType(sb, "monarch_jvm_gc_collection_time_seconds_per_second", "GC collection time seconds per second over the last monitor interval", "gauge");
+        appendHelpType(sb, "monarch_jvm_gc_monitor_interval_seconds", "Elapsed seconds in the GC monitor interval", "gauge");
         for (Map.Entry<String, Object> entry : gc.entrySet()) {
             if (!(entry.getValue() instanceof Map)) {
                 continue;
@@ -66,6 +71,11 @@ public class MetricsPrometheusSerializer {
             appendMetric(sb, "monarch_jvm_gc_collection_count_interval", labels, getDouble(gcData, "collectionCount"));
             appendMetric(sb, "monarch_jvm_gc_collection_time_millis_interval", labels, getDouble(gcData, "collectionTime"));
             appendMetric(sb, "monarch_jvm_gc_time_percent_interval", labels, getDouble(gcData, "gcTimePercent"));
+            appendMetric(sb, "monarch_jvm_gc_collection_count_total", labels, getDouble(gcData, "totalCollectionCount"));
+            appendMetric(sb, "monarch_jvm_gc_collection_time_seconds_total", labels, getDouble(gcData, "totalCollectionTimeMillis") / 1000.0);
+            appendMetric(sb, "monarch_jvm_gc_collection_count_per_second", labels, getDouble(gcData, "collectionCountPerSecond"));
+            appendMetric(sb, "monarch_jvm_gc_collection_time_seconds_per_second", labels, getDouble(gcData, "collectionTimeSecondsPerSecond"));
+            appendMetric(sb, "monarch_jvm_gc_monitor_interval_seconds", labels, getDouble(gcData, "intervalSeconds"));
         }
 
         appendHelpType(sb, "monarch_agent_info", "Agent info metric with static value 1", "gauge");
