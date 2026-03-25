@@ -22,9 +22,13 @@ public class Agent {
      * @param inst       The instrumentation instance.
      */
     public static void premain(String agentArgs, Instrumentation inst) {
-        AgentConfigurator.setupLogger(agentArgs);
-        //With -Xbootclasspath, codeSource is null, so, will take the jar path from agent args
-        AgentConfigurator.instrument(agentArgs, inst, JAVA_AGENT_MODE, null);
+        try {
+            AgentConfigurator.setupLogger(agentArgs);
+            //With -Xbootclasspath, codeSource is null, so, will take the jar path from agent args
+            AgentConfigurator.instrument(agentArgs, inst, JAVA_AGENT_MODE, null);
+        } catch (Throwable t) {
+            System.err.println("Failure in premain: " + t.getMessage());
+        }
     }
 
     /**
@@ -34,19 +38,17 @@ public class Agent {
      * @param inst       The instrumentation instance.
      */
     public static void agentmain(String agentArgs, Instrumentation inst) {
-        File agentJar = null;
         try {
-            agentJar = new File(Agent.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            File agentJar = new File(Agent.class.getProtectionDomain().getCodeSource().getLocation().toURI());
             //Since we might be dealing with java.lang classes transformation, Boostrap classloader will be the one trying to load our agent classes downstream.
             //This will result in classloading issues due to visibility principle.
             //Normal approach is to use -Xbootclasspath but to avoid unnecessary JVM options setup, we are using the below to append our agent jar to bootstrap's classpath.
             inst.appendToBootstrapClassLoaderSearch(new JarFile(agentJar));
-        } catch (Exception e) {
-            System.err.println("Failure in agentmain: " + e.getMessage());
-            return;
+            AgentConfigurator.setupLogger(agentArgs);
+            AgentConfigurator.instrument(agentArgs, inst, ATTACH_VM_MODE, agentJar.getAbsolutePath());
+        } catch (Throwable t) {
+            System.err.println("Failure in agentmain: " + t.getMessage());
         }
-        AgentConfigurator.setupLogger(agentArgs);
-        AgentConfigurator.instrument(agentArgs, inst, ATTACH_VM_MODE, agentJar.getAbsolutePath());
     }
 
 }

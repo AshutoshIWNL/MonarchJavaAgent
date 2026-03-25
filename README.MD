@@ -14,6 +14,7 @@ This is useful when you need to:
 - **Stack Trace Printing**: Print the stack trace when a certain method is invoked. Supports conditional printing only if a specific class/method appears in the current stack trace.
 - **Return Value Logging**: Log the return value of a method.
 - **Custom code addition**: Add custom code to a method.
+- **Class replacement**: Replace already loaded classes using external bytecode from `.class` files or `.jar` entries via JVM redefine.
 - **Heap Dump Capture**: Take a heap dump when a method is invoked or exits.
 - **Method Execution Time**: Print the time taken for a method's execution (Bit buggy currently and needs bytecode verification to be turned off).
 - **System Flags Printing**: Print system flags of the target application.
@@ -123,6 +124,8 @@ instrumentation:
     - ClassA::methodA@INGRESS::ADD::[System.out.println(this.getClass().getName());]
     - ClassA::methodA@CODEPOINT(11)::ADD::[System.out.println(499);]
     - ClassA::methodA@CODEPOINT(11)::ADD::[System.out.println(499 + "," + "Ashutosh Mishra");]
+    - com.example.MyService@CHANGE::FILE::[/opt/patches/MyService.class]
+    - com.example.*@CHANGE::JAR::[/opt/patches/hotfix.jar]
 
 observer:
   enabled: true
@@ -212,6 +215,20 @@ Where:
     - RET: Log method return value.
     - ADD: Add custom code.
 
+Class replacement rule syntax:
+
+```plaintext
+<ClassPattern>@CHANGE::FILE::[</absolute/path/to/ClassName.class>]
+<ClassPattern>@CHANGE::JAR::[</absolute/path/to/patches.jar>]
+```
+
+Where:
+
+- `<ClassPattern>` is either an exact FQCN (for example `com.example.MyClass`) or a wildcard suffix pattern (for example `com.example.*`).
+- `CHANGE` rules apply only to classes that are already loaded.
+- `FILE` uses raw bytes from the class file.
+- `JAR` resolves `<ClassPattern>` matches to class entries inside the jar.
+
 ## Metrics Endpoint
 
 If `observer.metrics.exposeHttp: true` is enabled in the config, MonarchJavaAgent starts a lightweight HTTP server exposing JVM metrics.
@@ -296,6 +313,7 @@ The project now includes an integration smoke harness that validates:
 - `-javaagent` startup mode
 - Runtime attach mode via Attach API
 - Instrumentation markers for `ARGS`, `RET`, `STACK`, `PROFILE`, `ADD`, `CODEPOINT`, `HEAP`
+- Class replacement success/failure coverage for `CHANGE::FILE` and `CHANGE::JAR`
 - Metrics endpoint availability
 - Heap dump generation
 - Runtime config reload behavior (rule removal stops instrumentation effect without restart)
@@ -332,6 +350,9 @@ powershell -ExecutionPolicy Bypass -File scripts\smoke-invalid-rule.ps1
 
 # nested config overrides legacy flat keys
 powershell -ExecutionPolicy Bypass -File scripts\smoke-config-precedence.ps1
+
+# class replacement via redefine from class file and jar
+powershell -ExecutionPolicy Bypass -File scripts\smoke-class-replace.ps1
 ```
 
 ### Linux/macOS (Shell)
@@ -360,6 +381,9 @@ bash scripts/smoke-invalid-rule.sh
 
 # nested config overrides legacy flat keys
 bash scripts/smoke-config-precedence.sh
+
+# class replacement via redefine from class file and jar
+bash scripts/smoke-class-replace.sh
 ```
 
 Smoke run artifacts (trace/log/config) are written to temp run directories under:

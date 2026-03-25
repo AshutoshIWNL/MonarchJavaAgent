@@ -22,6 +22,7 @@ import java.nio.file.Paths;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * The GlobalTransformer class implements the ClassFileTransformer interface
@@ -85,23 +86,24 @@ public class GlobalTransformer implements ClassFileTransformer {
      */
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
                             ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-        if (className == null) {
-            logger.warn("Received null className during transformation. Loader: " + loader);
-            return classfileBuffer;
-        }
-        if (config.isPrintClassLoaderTrace() &&
-                !className.startsWith("java/") && !className.startsWith("jdk/") &&
-                !className.startsWith("sun/") && !className.startsWith("javax/") && !className.startsWith(MJA_PACKAGE)) {
-            logger.trace(ClassLoaderTracer.printClassInfo(className, loader, protectionDomain));
-        }
-        if (rules.isEmpty()) {
-            return classfileBuffer;
-        }
-
-        String formattedClassName = className.replace("/", ".");
-        List<Rule> appropriateRules = getAppropriateRules(formattedClassName);
-        boolean needsInstrumentation = !appropriateRules.isEmpty();
+        String safeClassName = className == null ? "<null>" : className.replace("/", ".");
         try {
+            if (className == null) {
+                logger.warn("Received null className during transformation. Loader: " + loader);
+                return classfileBuffer;
+            }
+            if (config.isPrintClassLoaderTrace() &&
+                    !className.startsWith("java/") && !className.startsWith("jdk/") &&
+                    !className.startsWith("sun/") && !className.startsWith("javax/") && !className.startsWith(MJA_PACKAGE)) {
+                logger.trace(ClassLoaderTracer.printClassInfo(className, loader, protectionDomain));
+            }
+            if (rules.isEmpty()) {
+                return classfileBuffer;
+            }
+
+            String formattedClassName = className.replace("/", ".");
+            List<Rule> appropriateRules = getAppropriateRules(formattedClassName);
+            boolean needsInstrumentation = !appropriateRules.isEmpty();
             if (needsInstrumentation) {
                 if (!backupSet.contains(formattedClassName)) {
                     backupByteCode(formattedClassName, classfileBuffer, logger.getTraceDir());
@@ -109,9 +111,11 @@ public class GlobalTransformer implements ClassFileTransformer {
                 return transformClass(formattedClassName, classfileBuffer, appropriateRules);
             }
         } catch (TransformException e) {
-            logger.error("Failed to transform class " + formattedClassName, e);
+            logger.error("Failed to transform class " + safeClassName, e);
         } catch (BackupCreationException e) {
-            logger.error("Failed to back up bytecode for class " + formattedClassName + ", won't go ahead with the transformation", e);
+            logger.error("Failed to back up bytecode for class " + safeClassName + ", won't go ahead with the transformation", e);
+        } catch (Throwable t) {
+            logger.error("Unexpected transformer error for class " + safeClassName + "; returning original bytecode. Reason: " + t.getMessage());
         }
         return classfileBuffer;
     }
@@ -131,9 +135,11 @@ public class GlobalTransformer implements ClassFileTransformer {
     }
 
     public void setRules(List<Rule> rules) {
-        this.rules = rules;
+        this.rules = rules.stream()
+                .filter(rule -> !rule.isClassReplacementRule())
+                .collect(Collectors.toList());
         Map<String, List<Rule>> newMap = new ConcurrentHashMap<>();
-        for (Rule rule : rules) {
+        for (Rule rule : this.rules) {
             String className = rule.getClassName().toLowerCase();
             newMap.computeIfAbsent(className, k -> new ArrayList<>()).add(rule);
         }
@@ -171,9 +177,13 @@ public class GlobalTransformer implements ClassFileTransformer {
         for (Rule rule : rules) {
             try {
                 modifiedBytes = applyRule(rule, formattedClassName, modifiedBytes);
-            } catch (IOException | CannotCompileException | UnsupportedActionException | NotFoundException e) {
-                logger.error(e.getMessage(), e);
-                throw new TransformException(e);
+            } catch (Throwable t) {
+                if (t instanceof Exception) {
+                    logger.error(t.getMessage(), (Exception) t);
+                } else {
+                    logger.error("Unrecoverable transformer error in " + formattedClassName + ": " + t.getMessage());
+                }
+                throw new TransformException(t);
             }
         }
         logger.trace("Transformed class " + formattedClassName);

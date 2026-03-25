@@ -9,5 +9,6 @@ public enum Event {
     INGRESS,
     EGRESS,
     CODEPOINT,
-    PROFILE
+    PROFILE,
+    CHANGE
 }

@@ -4,7 +4,7 @@
   <groupId>com.asm.mja</groupId>
   <artifactId>MonarchJavaAgent</artifactId>
   <name>MonarchJavaAgent</name>
-  <version>1.1-SNAPSHOT</version>
+  <version>1.2</version>
   <url>http://maven.apache.org</url>
   <build>
     <plugins>
@@ -78,6 +78,10 @@
           <target>8</target>
         </configuration>
       </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.2.5</version>
+      </plugin>
     </plugins>
   </build>
   <dependencies>
@@ -90,6 +94,26 @@
         <exclusion>
           <artifactId>jdk.tools</artifactId>
           <groupId>jdk.tools</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>5.10.2</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>junit-jupiter-api</artifactId>
+          <groupId>org.junit.jupiter</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>junit-jupiter-params</artifactId>
+          <groupId>org.junit.jupiter</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>junit-jupiter-engine</artifactId>
+          <groupId>org.junit.jupiter</groupId>
         </exclusion>
       </exclusions>
     </dependency>

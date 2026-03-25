@@ -9,4 +9,7 @@ bash "$script_dir/smoke-javaagent.sh"
 echo "[smoke-all] Running runtime attach smoke..."
 bash "$script_dir/smoke-attach.sh"
 
+echo "[smoke-all] Running class replacement smoke..."
+bash "$script_dir/smoke-class-replace.sh"
+
 echo "[smoke-all] PASS"

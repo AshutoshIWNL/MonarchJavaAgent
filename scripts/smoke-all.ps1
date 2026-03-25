@@ -9,4 +9,7 @@ Write-Host "[smoke-all] Running startup attach smoke..."
 Write-Host "[smoke-all] Running runtime attach smoke..."
 & (Join-Path $scriptDir "smoke-attach.ps1")
 
+Write-Host "[smoke-all] Running class replacement smoke..."
+& (Join-Path $scriptDir "smoke-class-replace.ps1")
+
 Write-Host "[smoke-all] PASS"

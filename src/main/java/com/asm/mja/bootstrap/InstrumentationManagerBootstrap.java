@@ -35,6 +35,7 @@ public class InstrumentationManagerBootstrap {
         instrumentationManager.setLastModified(new File(configFile).lastModified());
         instrumentationManager.setLogger(traceFileLogger);
         instrumentationManager.setConfigRefreshInterval((long) config.getConfigRefreshInterval());
+        instrumentationManager.applyReplacementRulesOnStartup();
         instrumentationManager.execute();
     }
 }

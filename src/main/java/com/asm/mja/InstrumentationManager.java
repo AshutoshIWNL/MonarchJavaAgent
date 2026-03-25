@@ -6,6 +6,7 @@ import com.asm.mja.metrics.MetricsHttpServer;
 import com.asm.mja.monitor.*;
 import com.asm.mja.rule.Rule;
 import com.asm.mja.rule.RuleParser;
+import com.asm.mja.rule.ReplacementSourceType;
 import com.asm.mja.logging.TraceFileLogger;
 import com.asm.mja.transformer.GlobalTransformer;
 import com.asm.mja.utils.ByteCodeUtils;
@@ -13,13 +14,17 @@ import com.asm.mja.utils.ClassRuleUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 /**
  * @author ashut
@@ -112,6 +117,8 @@ public class InstrumentationManager implements Runnable {
                     lastModified = currentLastModified;
                 } catch (IOException e) {
                     logger.error("Configuration file parsing failed, please verify if it is a valid YAML file after your changes", e);
+                } catch (Throwable t) {
+                    logger.error("Unexpected error while processing config reload; agent will keep running with previous state. Reason: " + t.getMessage());
                 }
             }
 
@@ -151,7 +158,13 @@ public class InstrumentationManager implements Runnable {
 
         transformer.resetConfig(config);
         List<String> rulesString = new ArrayList<>(config.getAgentRules());
-        List<Rule> newRules = RuleParser.parseRules(rulesString);
+        List<Rule> newRules;
+        try {
+            newRules = RuleParser.parseRules(rulesString);
+        } catch (Throwable t) {
+            logger.error("Failed to parse new rules during config reload; keeping previous instrumentation. Reason: " + t.getMessage());
+            return;
+        }
         addNewInstrumentation(newRules);
         currentRules = newRules;
         initialConfig = config;
@@ -171,11 +184,23 @@ public class InstrumentationManager implements Runnable {
     }
 
     private void addNewInstrumentation(List<Rule> newRules) {
+        List<Rule> transformerRules = newRules.stream()
+                .filter(rule -> !rule.isClassReplacementRule())
+                .collect(Collectors.toList());
+        List<Rule> replacementRules = newRules.stream()
+                .filter(Rule::isClassReplacementRule)
+                .collect(Collectors.toList());
+
+        applyTransformerRules(transformerRules);
+        applyClassReplacementRules(replacementRules);
+    }
+
+    private void applyTransformerRules(List<Rule> transformerRules) {
         if (transformer == null) {
             return;
         }
-        transformer.setRules(newRules);
-        Class<?>[] classesToInstrument = ClassRuleUtils.ruleClasses(instrumentation.getAllLoadedClasses(), newRules);
+        transformer.setRules(transformerRules);
+        Class<?>[] classesToInstrument = ClassRuleUtils.ruleClasses(instrumentation.getAllLoadedClasses(), transformerRules);
         for (Class<?> classz : classesToInstrument) {
             String className = classz.getName();
             try {
@@ -195,9 +220,51 @@ public class InstrumentationManager implements Runnable {
         }
     }
 
+    private void applyClassReplacementRules(List<Rule> replacementRules) {
+        if (replacementRules == null || replacementRules.isEmpty()) {
+            return;
+        }
+
+        for (Rule replacementRule : replacementRules) {
+            List<Class<?>> targetClasses = ClassRuleUtils.resolveRuleClasses(
+                    instrumentation.getAllLoadedClasses(),
+                    Collections.singletonList(replacementRule)
+            );
+
+            if (targetClasses.isEmpty()) {
+                logger.warn("Class replacement skipped; no loaded class matched pattern " + replacementRule.getClassName());
+                continue;
+            }
+
+            for (Class<?> targetClass : targetClasses) {
+                applySingleClassReplacement(replacementRule, targetClass);
+            }
+        }
+    }
+
+    private void applySingleClassReplacement(Rule replacementRule, Class<?> targetClass) {
+        String sourcePath = replacementRule.getReplacementSourcePath();
+        try {
+            logger.trace("Class replacement requested for " + targetClass.getName() + " using "
+                    + replacementRule.getReplacementSourceType() + " source: " + sourcePath);
+
+            backupOriginalClassBytecodeIfMissing(targetClass);
+            byte[] replacementBytecode = readReplacementBytecode(replacementRule, targetClass.getName());
+            instrumentation.redefineClasses(new ClassDefinition(targetClass, replacementBytecode));
+            logger.trace("Class replacement succeeded for " + targetClass.getName());
+        } catch (Exception e) {
+            logger.error("Class replacement failed for " + targetClass.getName() + " from " + sourcePath + "; reason: " + e.getMessage(), e);
+        } catch (Error error) {
+            logger.error("Class replacement failed for " + targetClass.getName() + " from " + sourcePath + "; reason: " + error.getMessage());
+        }
+    }
+
     private void revertInstrumentation(List<Rule> currentRules) {
         if (currentRules != null) {
-            Set<String> classSet = currentRules.stream().map(Rule::getClassName).collect(Collectors.toSet());
+            Set<String> classSet = ClassRuleUtils.resolveRuleClasses(instrumentation.getAllLoadedClasses(), currentRules)
+                    .stream()
+                    .map(Class::getName)
+                    .collect(Collectors.toSet());
             for (String cName : classSet) {
                 loadOriginalByteCode(cName);
             }
@@ -231,12 +298,66 @@ public class InstrumentationManager implements Runnable {
         return logger.getTraceDir() + File.separator + "backup" + File.separator + safeFileName;
     }
 
+    private void backupOriginalClassBytecodeIfMissing(Class<?> targetClass) throws IOException {
+        Path backupClassPath = Paths.get(constructBackupClassPath(targetClass.getName()));
+        Files.createDirectories(backupClassPath.getParent());
+        if (Files.exists(backupClassPath)) {
+            return;
+        }
+        byte[] originalByteCode = ByteCodeUtils.getClassBytecode(targetClass);
+        Files.write(backupClassPath, originalByteCode);
+        logger.trace("Backed up class " + targetClass.getName() + " to " + backupClassPath.toAbsolutePath());
+    }
+
+    private byte[] readReplacementBytecode(Rule replacementRule, String className) throws IOException {
+        ReplacementSourceType sourceType = replacementRule.getReplacementSourceType();
+        String sourcePath = replacementRule.getReplacementSourcePath();
+        if (sourceType == ReplacementSourceType.FILE) {
+            return Files.readAllBytes(Paths.get(sourcePath));
+        }
+
+        if (sourceType == ReplacementSourceType.JAR) {
+            return readClassFromJar(sourcePath, className);
+        }
+
+        throw new IllegalArgumentException("Unsupported replacement source type: " + sourceType);
+    }
+
+    private byte[] readClassFromJar(String jarPath, String className) throws IOException {
+        String classEntryPath = className.replace('.', '/') + ".class";
+        try (JarFile jarFile = new JarFile(jarPath)) {
+            JarEntry jarEntry = jarFile.getJarEntry(classEntryPath);
+            if (jarEntry == null) {
+                throw new IOException("Class " + className + " not found in jar " + jarPath);
+            }
+            try (InputStream inputStream = jarFile.getInputStream(jarEntry)) {
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    baos.write(buffer, 0, bytesRead);
+                }
+                return baos.toByteArray();
+            }
+        }
+    }
+
     public void execute() {
         logger.trace("Starting Monarch Instrumentation Manager");
         startOrStopMonitors(initialConfig);
         thread = new Thread(this, "monarch-inst-manager");
         thread.setDaemon(true);
         thread.start();
+    }
+
+    public void applyReplacementRulesOnStartup() {
+        if (currentRules == null || currentRules.isEmpty()) {
+            return;
+        }
+        List<Rule> replacementRules = currentRules.stream()
+                .filter(Rule::isClassReplacementRule)
+                .collect(Collectors.toList());
+        applyClassReplacementRules(replacementRules);
     }
 
     public void shutdown() {

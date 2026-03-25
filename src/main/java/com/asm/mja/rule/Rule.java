@@ -16,6 +16,8 @@ public class Rule {
 
     private String customCode;
     private int lineNumber;
+    private ReplacementSourceType replacementSourceType;
+    private String replacementSourcePath;
 
     private String filterName;
     public Rule(String className, String methodName, Event event, Action action, int lineNumber) {
@@ -38,6 +40,15 @@ public class Rule {
         this.lineNumber = lineNumber;
         this.customCode = customCode;
         this.filterName=filterName;
+    }
+
+    public static Rule forClassReplacement(String className,
+                                           ReplacementSourceType replacementSourceType,
+                                           String replacementSourcePath) {
+        Rule rule = new Rule(className, null, Event.CHANGE, null, 0);
+        rule.replacementSourceType = replacementSourceType;
+        rule.replacementSourcePath = replacementSourcePath;
+        return rule;
     }
 
 
@@ -94,5 +105,17 @@ public class Rule {
     }
     public String getFilterName(){
         return filterName;
+    }
+
+    public boolean isClassReplacementRule() {
+        return Event.CHANGE.equals(event);
+    }
+
+    public ReplacementSourceType getReplacementSourceType() {
+        return replacementSourceType;
+    }
+
+    public String getReplacementSourcePath() {
+        return replacementSourcePath;
     }
 }
