@@ -10,6 +10,8 @@ theme: null
 
 Monarch is a hybrid Java agent for production diagnostics and JVM observation. It lets you attach targeted bytecode instrumentation to a live JVM, expose Prometheus-compatible JVM metrics, and move between instrumenter, observer, and hybrid workflows without changing the application code.
 
+Operational safety: Monarch contains agent-side failures at startup and runtime boundaries so instrumentation errors degrade behavior instead of crashing application flow.
+
 "Arise, shadows of execution!"
 
 ## Why Monarch
@@ -27,6 +29,7 @@ Use Monarch when you need to:
 * **Shadow Argument Whispers:** Capture and log the arguments passed to a method.
 * **Shadow Return Echoes:** Record the return values of methods.
 * **Shadow Code Infusion:** Inject your own diagnostic commands into the flow of execution.
+* **Shadow Form Rewrite:** Replace already-loaded classes from external `.class` files or `.jar` entries using JVM redefine.
 * **Shadow Time Capture:** Measure method execution time.
 * **Shadow Memory Grasp:** Seize a heap dump at critical moments.
 * **Shadow Resource Monitoring:** Track heap, CPU, GC, thread, and classloader behavior.
@@ -94,6 +97,8 @@ instrumentation:
     - ClassA::methodA@INGRESS::ADD::[System.out.println(this.getClass().getName());]
     - ClassA::methodA@CODEPOINT(11)::ADD::[System.out.println(499);]
     - ClassA::methodA@CODEPOINT(11)::ADD::[System.out.println(499 + "," + "Ashutosh Mishra");]
+    - com.example.MyService@CHANGE::FILE::[/opt/patches/MyService.class]
+    - com.example.*@CHANGE::JAR::[/opt/patches/hotfix.jar]
 
 observer:
   enabled: true
@@ -134,6 +139,20 @@ Where:
 * `<EVENT>` is one of `INGRESS`, `EGRESS`, `CODEPOINT`, `PROFILE`
 * `<ACTION>` is one of `STACK`, `HEAP`, `ARGS`, `RET`, `ADD`
 
+Class replacement rule syntax:
+
+```plaintext
+<ClassPattern>@CHANGE::FILE::[</absolute/path/to/ClassName.class>]
+<ClassPattern>@CHANGE::JAR::[</absolute/path/to/patches.jar>]
+```
+
+Where:
+
+* `<ClassPattern>` supports exact FQCN (for example `com.example.MyClass`) or wildcard suffix matching (for example `com.example.*`)
+* `CHANGE` applies only to classes that are already loaded
+* `FILE` reads replacement bytecode from a single class file
+* `JAR` reads replacement bytecode from matching class entries inside the jar
+
 ## Shadow Metrics Gate
 
 If `observer.metrics.exposeHttp: true` is enabled, Monarch starts a lightweight HTTP server exposing JVM metrics.
@@ -172,6 +191,23 @@ Example Grafana dashboard:
 git clone https://github.com/AshutoshIWNL/MonarchJavaAgent.git
 cd MonarchJavaAgent
 mvn clean package
+```
+
+## Shadow Trials
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\smoke-all.ps1
+```
+
+Individual suites:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\smoke-javaagent.ps1
+powershell -ExecutionPolicy Bypass -File scripts\smoke-attach.ps1
+powershell -ExecutionPolicy Bypass -File scripts\smoke-class-replace.ps1
+powershell -ExecutionPolicy Bypass -File scripts\smoke-config-reload.ps1
+powershell -ExecutionPolicy Bypass -File scripts\smoke-invalid-rule.ps1
+powershell -ExecutionPolicy Bypass -File scripts\smoke-config-precedence.ps1
 ```
 
 ## The Architect of Shadows

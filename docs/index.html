@@ -7,6 +7,8 @@
 
 <p>Monarch is a hybrid Java agent for production diagnostics and JVM observation. It lets you attach targeted bytecode instrumentation to a live JVM, expose Prometheus-compatible JVM metrics, and move between instrumenter, observer, and hybrid workflows without changing the application code.</p>
 
+<p>Operational safety: Monarch contains agent-side failures at startup and runtime boundaries so instrumentation errors degrade behavior instead of crashing application flow.</p>
+
 <p>“Arise, shadows of execution!”</p>
 
 <h2 id="why-monarch">Why Monarch</h2>
@@ -27,6 +29,7 @@
   <li><strong>Shadow Argument Whispers:</strong> Capture and log the arguments passed to a method.</li>
   <li><strong>Shadow Return Echoes:</strong> Record the return values of methods.</li>
   <li><strong>Shadow Code Infusion:</strong> Inject your own diagnostic commands into the flow of execution.</li>
+  <li><strong>Shadow Form Rewrite:</strong> Replace already-loaded classes from external <code class="language-plaintext highlighter-rouge">.class</code> files or <code class="language-plaintext highlighter-rouge">.jar</code> entries using JVM redefine.</li>
   <li><strong>Shadow Time Capture:</strong> Measure method execution time.</li>
   <li><strong>Shadow Memory Grasp:</strong> Seize a heap dump at critical moments.</li>
   <li><strong>Shadow Resource Monitoring:</strong> Track heap, CPU, GC, thread, and classloader behavior.</li>
@@ -122,6 +125,8 @@
     <span class="pi">-</span> <span class="s">ClassA::methodA@INGRESS::ADD::[System.out.println(this.getClass().getName());]</span>
     <span class="pi">-</span> <span class="s">ClassA::methodA@CODEPOINT(11)::ADD::[System.out.println(499);]</span>
     <span class="pi">-</span> <span class="s">ClassA::methodA@CODEPOINT(11)::ADD::[System.out.println(499 + "," + "Ashutosh Mishra");]</span>
+    <span class="pi">-</span> <span class="s">com.example.MyService@CHANGE::FILE::[/opt/patches/MyService.class]</span>
+    <span class="pi">-</span> <span class="s">com.example.*@CHANGE::JAR::[/opt/patches/hotfix.jar]</span>
 
 <span class="na">observer</span><span class="pi">:</span>
   <span class="na">enabled</span><span class="pi">:</span> <span class="kc">true</span>
@@ -161,6 +166,21 @@
   <li><code class="language-plaintext highlighter-rouge">&lt;MethodName&gt;</code> is the method name</li>
   <li><code class="language-plaintext highlighter-rouge">&lt;EVENT&gt;</code> is one of <code class="language-plaintext highlighter-rouge">INGRESS</code>, <code class="language-plaintext highlighter-rouge">EGRESS</code>, <code class="language-plaintext highlighter-rouge">CODEPOINT</code>, <code class="language-plaintext highlighter-rouge">PROFILE</code></li>
   <li><code class="language-plaintext highlighter-rouge">&lt;ACTION&gt;</code> is one of <code class="language-plaintext highlighter-rouge">STACK</code>, <code class="language-plaintext highlighter-rouge">HEAP</code>, <code class="language-plaintext highlighter-rouge">ARGS</code>, <code class="language-plaintext highlighter-rouge">RET</code>, <code class="language-plaintext highlighter-rouge">ADD</code></li>
+</ul>
+
+<p>Class replacement rule syntax:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;ClassPattern&gt;@CHANGE::FILE::[&lt;/absolute/path/to/ClassName.class&gt;]
+&lt;ClassPattern&gt;@CHANGE::JAR::[&lt;/absolute/path/to/patches.jar&gt;]
+</code></pre></div></div>
+
+<p>Where:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">&lt;ClassPattern&gt;</code> supports exact FQCN (for example <code class="language-plaintext highlighter-rouge">com.example.MyClass</code>) or wildcard suffix matching (for example <code class="language-plaintext highlighter-rouge">com.example.*</code>)</li>
+  <li><code class="language-plaintext highlighter-rouge">CHANGE</code> applies only to classes that are already loaded</li>
+  <li><code class="language-plaintext highlighter-rouge">FILE</code> reads replacement bytecode from a single class file</li>
+  <li><code class="language-plaintext highlighter-rouge">JAR</code> reads replacement bytecode from matching class entries inside the jar</li>
 </ul>
 
 <h2 id="shadow-metrics-gate">Shadow Metrics Gate</h2>
@@ -204,6 +224,21 @@
 <span class="nb">cd </span>MonarchJavaAgent
 mvn clean package
 </code></pre></div></div>
+
+<h2 id="shadow-trials">Shadow Trials</h2>
+
+<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">powershell</span><span class="w"> </span><span class="nt">-ExecutionPolicy</span><span class="w"> </span><span class="nx">Bypass</span><span class="w"> </span><span class="nt">-File</span><span class="w"> </span><span class="nx">scripts\smoke-all.ps1</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Individual suites:</p>
+
+<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">powershell</span><span class="w"> </span><span class="nt">-ExecutionPolicy</span><span class="w"> </span><span class="nx">Bypass</span><span class="w"> </span><span class="nt">-File</span><span class="w"> </span><span class="nx">scripts\smoke-javaagent.ps1</span><span class="w">
+</span><span class="n">powershell</span><span class="w"> </span><span class="nt">-ExecutionPolicy</span><span class="w"> </span><span class="nx">Bypass</span><span class="w"> </span><span class="nt">-File</span><span class="w"> </span><span class="nx">scripts\smoke-attach.ps1</span><span class="w">
+</span><span class="n">powershell</span><span class="w"> </span><span class="nt">-ExecutionPolicy</span><span class="w"> </span><span class="nx">Bypass</span><span class="w"> </span><span class="nt">-File</span><span class="w"> </span><span class="nx">scripts\smoke-class-replace.ps1</span><span class="w">
+</span><span class="n">powershell</span><span class="w"> </span><span class="nt">-ExecutionPolicy</span><span class="w"> </span><span class="nx">Bypass</span><span class="w"> </span><span class="nt">-File</span><span class="w"> </span><span class="nx">scripts\smoke-config-reload.ps1</span><span class="w">
+</span><span class="n">powershell</span><span class="w"> </span><span class="nt">-ExecutionPolicy</span><span class="w"> </span><span class="nx">Bypass</span><span class="w"> </span><span class="nt">-File</span><span class="w"> </span><span class="nx">scripts\smoke-invalid-rule.ps1</span><span class="w">
+</span><span class="n">powershell</span><span class="w"> </span><span class="nt">-ExecutionPolicy</span><span class="w"> </span><span class="nx">Bypass</span><span class="w"> </span><span class="nt">-File</span><span class="w"> </span><span class="nx">scripts\smoke-config-precedence.ps1</span><span class="w">
+</span></code></pre></div></div>
 
 <h2 id="the-architect-of-shadows">The Architect of Shadows</h2>
 
