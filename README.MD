@@ -231,10 +231,22 @@ Exported metrics include:
 
 - Heap usage (bytes and usage percentages)
 - CPU load and cores
-- GC interval stats (per-GC labels)
+- GC interval stats (per-GC labels) plus GC totals/rates for long-window analysis
 - Thread stats
 - Classloader stats
 - Agent info + scrape timestamp
+
+Sampling cadence transparency:
+
+- Monarch updates metric values on monitor loops, not on every scrape.
+- Current monitor loop cadences are:
+  - CPU: every 10s
+  - Heap: every 30s
+  - GC / Thread / Classloader: every 60s
+- If Prometheus scrapes faster than these cadences (for example every 2s), repeated samples are expected between monitor updates. This is correct behavior, but adds little extra signal for those metrics.
+- For GC trends and alerting over time, prefer counter-based PromQL such as:
+  - `rate(monarch_jvm_gc_collection_count_total[5m])`
+  - `rate(monarch_jvm_gc_collection_time_seconds_total[5m])`
 
 ## Prometheus And Grafana
 
@@ -244,13 +256,19 @@ Minimal Prometheus scrape config:
 
 ```yaml
 global:
-  scrape_interval: 5s
+  scrape_interval: 10s
 
 scrape_configs:
   - job_name: "monarch-java-agent"
     static_configs:
       - targets: ["127.0.0.1:9090"]
 ```
+
+Scrape interval guidance:
+
+- `10s` is a practical default because CPU metrics update every 10s.
+- Scraping faster than 10s is allowed, but usually returns repeated values for most series.
+- If your focus is only slow-moving JVM health metrics, `15s`-`30s` can reduce Prometheus load with minimal loss.
 
 Common Prometheus queries:
 
