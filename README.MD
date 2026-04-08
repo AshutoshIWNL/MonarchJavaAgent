@@ -168,7 +168,7 @@ Launch args remain separate from YAML:
 - `smtpProperties`
 - `agentJarPath`
 
-See the checked-in example at [sampleConfig/mConfig.yaml](C:\Users\ashut\Documents\Personal Projects\MonarchJavaAgent\sampleConfig\mConfig.yaml).
+See the checked-in example at [sampleConfig/mConfig.yaml](sampleConfig/mConfig.yaml).
 
 Legacy flat example still accepted:
 
