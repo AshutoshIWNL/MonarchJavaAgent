@@ -11,6 +11,23 @@ function Assert-True {
     }
 }
 
+function Wait-Until {
+    param(
+        [scriptblock]$Condition,
+        [int]$TimeoutSeconds,
+        [int]$PollIntervalMs,
+        [string]$TimeoutMessage
+    )
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ((Get-Date) -lt $deadline) {
+        if (& $Condition) {
+            return
+        }
+        Start-Sleep -Milliseconds $PollIntervalMs
+    }
+    throw "READINESS TIMEOUT: $TimeoutMessage"
+}
+
 function Escape-YamlPath {
     param([string]$PathValue)
     return $PathValue.Replace("\", "\\")
@@ -112,7 +129,9 @@ $proc = Start-Process `
     -RedirectStandardError $targetStdErr
 
 try {
-    Start-Sleep -Seconds 3
+    Wait-Until -TimeoutSeconds 20 -PollIntervalMs 250 -TimeoutMessage "Target app did not stay alive long enough before attach." -Condition {
+        return (-not $proc.HasExited)
+    }
     $preAttachTraceDirs = Get-ChildItem -Path $traceRoot -Directory -ErrorAction SilentlyContinue
     Assert-True (($null -eq $preAttachTraceDirs) -or ($preAttachTraceDirs.Count -eq 0)) "Trace output already exists before attach"
 
@@ -134,34 +153,52 @@ Write-Host "[smoke-attach] Attaching agent to PID $($proc.Id)..."
         -pid $proc.Id | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "Attach CLI failed with exit code $LASTEXITCODE" }
 
-    Start-Sleep -Seconds 8
-
+    Wait-Until -TimeoutSeconds 40 -PollIntervalMs 500 -TimeoutMessage "No trace directory created under $traceRoot after attach." -Condition {
+        $dirs = Get-ChildItem -Path $traceRoot -Directory -ErrorAction SilentlyContinue
+        return $null -ne $dirs -and $dirs.Count -gt 0
+    }
     $traceDir = Get-ChildItem -Path $traceRoot -Directory | Sort-Object LastWriteTime -Descending | Select-Object -First 1
     Assert-True ($null -ne $traceDir) "No trace directory created under $traceRoot after attach"
 
     $traceFile = Join-Path $traceDir.FullName "agent.trace"
-    Assert-True (Test-Path $traceFile) "Trace file not found: $traceFile"
+    Wait-Until -TimeoutSeconds 40 -PollIntervalMs 500 -TimeoutMessage "Trace file not found: $traceFile" -Condition {
+        return Test-Path $traceFile
+    }
 
+    Wait-Until -TimeoutSeconds 90 -PollIntervalMs 1000 -TimeoutMessage "Trace markers did not appear in time: ARGS/RET/STACK/PROFILE/ADD/CODEPOINT/HEAP and monitor traces." -Condition {
+        $traceText = Get-Content -Path $traceFile -Raw
+        return $traceText.Contains("ARGS |") `
+            -and $traceText.Contains("{com.monarchit.target.TargetApp.TargetApp} | INGRESS | ARGS") `
+            -and $traceText.Contains("RET |") `
+            -and $traceText.Contains("STACK") `
+            -and $traceText.Contains("{com.monarchit.target.TargetApp.filteredStackMethod} | INGRESS | STACK") `
+            -and $traceText.Contains("PROFILE | Execution time") `
+            -and $traceText.Contains("ADD_MARKER") `
+            -and $traceText.Contains("CODEPOINT_MARKER") `
+            -and $traceText.Contains("HEAP") `
+            -and $traceText.Contains("Current JVM CPU Load") `
+            -and $traceText.Contains("GC Stats -") `
+            -and $traceText.Contains("Thread Stats -") `
+            -and $traceText.Contains("ClassLoader Stats -") `
+            -and $traceText.Contains("{USED:")
+    }
     $traceText = Get-Content -Path $traceFile -Raw
-    Assert-True ($traceText.Contains("ARGS |")) "Missing ARGS instrumentation marker after attach"
-    Assert-True ($traceText.Contains("{com.monarchit.target.TargetApp.TargetApp} | INGRESS | ARGS")) "Missing constructor ARGS instrumentation marker after attach"
-    Assert-True ($traceText.Contains("RET |")) "Missing RET instrumentation marker after attach"
-    Assert-True ($traceText.Contains("STACK")) "Missing STACK instrumentation marker after attach"
-    Assert-True ($traceText.Contains("{com.monarchit.target.TargetApp.filteredStackMethod} | INGRESS | STACK")) "Missing STACK filter instrumentation marker after attach"
-    Assert-True ($traceText.Contains("PROFILE | Execution time")) "Missing PROFILE instrumentation marker after attach"
-    Assert-True ($traceText.Contains("ADD_MARKER")) "Missing ADD custom code marker after attach"
-    Assert-True ($traceText.Contains("CODEPOINT_MARKER")) "Missing CODEPOINT custom code marker after attach"
-    Assert-True ($traceText.Contains("HEAP")) "Missing HEAP instrumentation marker after attach"
-    Assert-True ($traceText.Contains("Current JVM CPU Load")) "Missing CPU monitor trace after attach"
-    Assert-True ($traceText.Contains("GC Stats -")) "Missing GC monitor trace after attach"
-    Assert-True ($traceText.Contains("Thread Stats -")) "Missing Thread monitor trace after attach"
-    Assert-True ($traceText.Contains("ClassLoader Stats -")) "Missing ClassLoader monitor trace after attach"
-    Assert-True ($traceText.Contains("{USED:")) "Missing Heap monitor trace after attach"
 
-    $heapDumps = @(Get-ChildItem -Path $traceDir.FullName -Filter "*.hprof" -File -ErrorAction SilentlyContinue)
-    Assert-True ($heapDumps.Count -ge 1) "No heap dump file generated after attach"
+    Wait-Until -TimeoutSeconds 60 -PollIntervalMs 1000 -TimeoutMessage "No heap dump file generated after attach." -Condition {
+        $heapDumps = @(Get-ChildItem -Path $traceDir.FullName -Filter "*.hprof" -File -ErrorAction SilentlyContinue)
+        return $heapDumps.Count -ge 1
+    }
 
-    $metrics = Invoke-WebRequest -UseBasicParsing -Uri ("http://127.0.0.1:{0}/metrics" -f $metricsPort)
+    Wait-Until -TimeoutSeconds 45 -PollIntervalMs 1000 -TimeoutMessage "Metrics endpoint did not become reachable after attach." -Condition {
+        try {
+            $null = Invoke-WebRequest -UseBasicParsing -Uri ("http://127.0.0.1:{0}/metrics" -f $metricsPort) -TimeoutSec 3
+            return $true
+        } catch {
+            return $false
+        }
+    }
+
+    $metrics = Invoke-WebRequest -UseBasicParsing -Uri ("http://127.0.0.1:{0}/metrics" -f $metricsPort) -TimeoutSec 5
     Assert-True ($metrics.StatusCode -eq 200) "Metrics endpoint did not return HTTP 200 after attach"
     Assert-True ($metrics.Headers["Content-Type"].Contains("text/plain")) "Metrics endpoint did not return Prometheus text content type after attach"
     Assert-True ($metrics.Content.Contains("monarch_agent_info{agent=""MonarchJavaAgent""} 1.0")) "Prometheus payload missing monarch_agent_info after attach"

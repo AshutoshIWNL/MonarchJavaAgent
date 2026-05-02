@@ -319,6 +319,7 @@ The project now includes an integration smoke harness that validates:
 - Runtime config reload behavior (rule removal stops instrumentation effect without restart)
 - Invalid rule behavior (startup failure for malformed action rules)
 - Nested-vs-legacy config precedence behavior at runtime
+- Boundary safety behavior where startup/attach/transform failures are contained and do not crash the host JVM flow
 
 ### Prerequisites
 
@@ -390,6 +391,7 @@ Smoke run artifacts (trace/log/config) are written to temp run directories under
 
 - Windows: `%TEMP%\mja-smoke\...`
 - Linux/macOS: `/tmp/mja-smoke/...`
+
 
 ## Author
 

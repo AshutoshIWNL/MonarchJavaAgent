@@ -1,6 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+wait_until() {
+  local timeout_secs="$1"
+  local poll_interval_secs="$2"
+  local timeout_message="$3"
+  local condition_cmd="$4"
+  local start
+  start="$(date +%s)"
+  while true; do
+    if eval "$condition_cmd"; then
+      return 0
+    fi
+    local now
+    now="$(date +%s)"
+    if (( now - start >= timeout_secs )); then
+      echo "READINESS TIMEOUT: $timeout_message" >&2
+      return 1
+    fi
+    sleep "$poll_interval_secs"
+  done
+}
+
 escape_yaml_path() {
   echo "$1" | sed 's/\\/\\\\/g'
 }
@@ -93,7 +114,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-sleep 3
+wait_until 20 1 "Target app did not stay alive long enough before attach." "kill -0 $target_pid >/dev/null 2>&1"
 pre_trace_count="$(find "$trace_root" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
 if [[ "$pre_trace_count" -ne 0 ]]; then
   echo "Trace output already exists before attach" >&2
@@ -118,7 +139,7 @@ fi
   -args "agentLogFileDir=$agent_log_dir,agentLogLevel=INFO" \
   -pid "$target_pid"
 
-sleep 8
+wait_until 40 1 "No trace directory created under $trace_root after attach." "[[ -n \"\$(find \"$trace_root\" -mindepth 1 -maxdepth 1 -type d | head -n 1)\" ]]"
 
 trace_dir="$(find "$trace_root" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
 if [[ -z "${trace_dir:-}" ]]; then
@@ -127,28 +148,30 @@ if [[ -z "${trace_dir:-}" ]]; then
 fi
 
 trace_file="$trace_dir/agent.trace"
-if [[ ! -f "$trace_file" ]]; then
-  echo "Trace file not found: $trace_file" >&2
-  exit 1
-fi
+wait_until 40 1 "Trace file not found: $trace_file" "[[ -f \"$trace_file\" ]]"
+
+wait_until 90 1 "Trace markers did not appear in time: ARGS/RET/STACK/PROFILE/ADD/CODEPOINT/HEAP and monitor traces." \
+  "trace_text=\$(cat \"$trace_file\"); \
+   grep -q 'ARGS |' <<<\"\$trace_text\" && \
+   grep -q '{com.monarchit.target.TargetApp.TargetApp} | INGRESS | ARGS' <<<\"\$trace_text\" && \
+   grep -q 'RET |' <<<\"\$trace_text\" && \
+   grep -q 'STACK' <<<\"\$trace_text\" && \
+   grep -q '{com.monarchit.target.TargetApp.filteredStackMethod} | INGRESS | STACK' <<<\"\$trace_text\" && \
+   grep -q 'PROFILE | Execution time' <<<\"\$trace_text\" && \
+   grep -q 'ADD_MARKER' <<<\"\$trace_text\" && \
+   grep -q 'CODEPOINT_MARKER' <<<\"\$trace_text\" && \
+   grep -q 'HEAP' <<<\"\$trace_text\" && \
+   grep -q 'Current JVM CPU Load' <<<\"\$trace_text\" && \
+   grep -q 'GC Stats -' <<<\"\$trace_text\" && \
+   grep -q 'Thread Stats -' <<<\"\$trace_text\" && \
+   grep -q 'ClassLoader Stats -' <<<\"\$trace_text\" && \
+   grep -q '{USED:' <<<\"\$trace_text\""
 
 trace_text="$(cat "$trace_file")"
-grep -q "ARGS |" <<<"$trace_text"
-grep -q "{com.monarchit.target.TargetApp.TargetApp} | INGRESS | ARGS" <<<"$trace_text"
-grep -q "RET |" <<<"$trace_text"
-grep -q "STACK" <<<"$trace_text"
-grep -q "{com.monarchit.target.TargetApp.filteredStackMethod} | INGRESS | STACK" <<<"$trace_text"
-grep -q "PROFILE | Execution time" <<<"$trace_text"
-grep -q "ADD_MARKER" <<<"$trace_text"
-grep -q "CODEPOINT_MARKER" <<<"$trace_text"
-grep -q "HEAP" <<<"$trace_text"
 
-heap_count="$(find "$trace_dir" -maxdepth 1 -type f -name "*.hprof" | wc -l | tr -d ' ')"
-if [[ "$heap_count" -lt 1 ]]; then
-  echo "No heap dump file generated after attach" >&2
-  exit 1
-fi
+wait_until 60 1 "No heap dump file generated after attach." "[[ \$(find \"$trace_dir\" -maxdepth 1 -type f -name '*.hprof' | wc -l | tr -d ' ') -ge 1 ]]"
 
+wait_until 45 1 "Metrics endpoint did not become reachable after attach." "curl -fsS \"http://127.0.0.1:$metrics_port/metrics\" >/dev/null 2>&1"
 metrics_payload="$(curl -fsS "http://127.0.0.1:$metrics_port/metrics")"
 grep -q '# HELP monarch_agent_info' <<<"$metrics_payload"
 grep -q 'monarch_agent_info{agent="MonarchJavaAgent"} 1.0' <<<"$metrics_payload"

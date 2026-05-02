@@ -133,11 +133,11 @@ if [[ ! -f "$trace_file" ]]; then
 fi
 
 trace_text="$(cat "$trace_file")"
-grep -q "Class replacement requested for com.monarchit.target.TargetApp using FILE source" <<<"$trace_text"
-grep -q "Class replacement succeeded for com.monarchit.target.TargetApp" <<<"$trace_text"
-grep -q "Class replacement requested for com.monarchit.target.TargetApp using JAR source" <<<"$trace_text"
+grep -q "Class replacement requested: ruleClassPattern=com.monarchit.target.TargetApp, targetClass=com.monarchit.target.TargetApp, sourceType=FILE" <<<"$trace_text"
+grep -q "Class replacement succeeded: ruleClassPattern=com.monarchit.target.TargetApp, targetClass=com.monarchit.target.TargetApp, sourceType=FILE" <<<"$trace_text"
+grep -q "Class replacement requested: ruleClassPattern=com.monarchit.target.\*, targetClass=com.monarchit.target.TargetApp, sourceType=JAR" <<<"$trace_text"
 grep -q "Class replacement skipped; no loaded class matched pattern com.monarchit.target.MissingClass" <<<"$trace_text"
-grep -q "Class replacement failed for com.monarchit.target.TargetApp from $escaped_invalid_class" <<<"$trace_text"
+grep -q "Class replacement failed: ruleClassPattern=com.monarchit.target.TargetApp, targetClass=com.monarchit.target.TargetApp, sourceType=FILE, sourcePath=$escaped_invalid_class; category=SOURCE_TARGET_MISMATCH" <<<"$trace_text"
 
 backup_file="$trace_dir/backup/com_monarchit_target_TargetApp.class"
 if [[ ! -f "$backup_file" ]]; then

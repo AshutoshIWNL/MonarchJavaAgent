@@ -244,18 +244,19 @@ public class InstrumentationManager implements Runnable {
 
     private void applySingleClassReplacement(Rule replacementRule, Class<?> targetClass) {
         String sourcePath = replacementRule.getReplacementSourcePath();
+        String ruleContext = formatReplacementRuleContext(replacementRule, targetClass);
         try {
-            logger.trace("Class replacement requested for " + targetClass.getName() + " using "
-                    + replacementRule.getReplacementSourceType() + " source: " + sourcePath);
+            logger.trace("Class replacement requested: " + ruleContext);
 
             backupOriginalClassBytecodeIfMissing(targetClass);
+            validateReplacementSource(replacementRule, targetClass);
             byte[] replacementBytecode = readReplacementBytecode(replacementRule, targetClass.getName());
             instrumentation.redefineClasses(new ClassDefinition(targetClass, replacementBytecode));
-            logger.trace("Class replacement succeeded for " + targetClass.getName());
+            logger.trace("Class replacement succeeded: " + ruleContext);
         } catch (Exception e) {
-            logger.error("Class replacement failed for " + targetClass.getName() + " from " + sourcePath + "; reason: " + e.getMessage(), e);
+            logger.error("Class replacement failed: " + ruleContext + "; category=" + classifyReplacementFailure(e) + "; reason=" + e.getMessage(), e);
         } catch (Error error) {
-            logger.error("Class replacement failed for " + targetClass.getName() + " from " + sourcePath + "; reason: " + error.getMessage());
+            logger.error("Class replacement failed: " + ruleContext + "; category=JVM_REDEFINE_ERROR; reason=" + error.getMessage());
         }
     }
 
@@ -321,6 +322,68 @@ public class InstrumentationManager implements Runnable {
         }
 
         throw new IllegalArgumentException("Unsupported replacement source type: " + sourceType);
+    }
+
+    private void validateReplacementSource(Rule replacementRule, Class<?> targetClass) throws IOException {
+        ReplacementSourceType sourceType = replacementRule.getReplacementSourceType();
+        String sourcePath = replacementRule.getReplacementSourcePath();
+        Path path = Paths.get(sourcePath);
+
+        if (!Files.exists(path)) {
+            throw new IOException("Replacement source path does not exist: " + sourcePath);
+        }
+        if (!Files.isRegularFile(path)) {
+            throw new IOException("Replacement source path is not a file: " + sourcePath);
+        }
+
+        if (sourceType == ReplacementSourceType.FILE) {
+            String expectedFileName = targetClass.getSimpleName() + ".class";
+            String actualFileName = path.getFileName().toString();
+            if (!expectedFileName.equals(actualFileName)) {
+                throw new IOException("Replacement class file name mismatch. Expected " + expectedFileName
+                        + " for target " + targetClass.getName() + " but got " + actualFileName);
+            }
+        } else if (sourceType == ReplacementSourceType.JAR) {
+            String classEntryPath = targetClass.getName().replace('.', '/') + ".class";
+            try (JarFile jarFile = new JarFile(sourcePath)) {
+                if (jarFile.getJarEntry(classEntryPath) == null) {
+                    throw new IOException("Replacement jar does not contain target entry " + classEntryPath);
+                }
+            }
+        } else {
+            throw new IOException("Unsupported replacement source type: " + sourceType);
+        }
+    }
+
+    private String formatReplacementRuleContext(Rule replacementRule, Class<?> targetClass) {
+        return "ruleClassPattern=" + replacementRule.getClassName()
+                + ", targetClass=" + targetClass.getName()
+                + ", sourceType=" + replacementRule.getReplacementSourceType()
+                + ", sourcePath=" + replacementRule.getReplacementSourcePath();
+    }
+
+    private String classifyReplacementFailure(Exception e) {
+        if (e instanceof java.io.FileNotFoundException) {
+            return "SOURCE_PATH_NOT_FOUND";
+        }
+        if (e instanceof java.nio.file.InvalidPathException) {
+            return "INVALID_SOURCE_PATH";
+        }
+        if (e instanceof UnmodifiableClassException) {
+            return "UNMODIFIABLE_CLASS";
+        }
+        if (e instanceof ClassNotFoundException) {
+            return "CLASS_NOT_FOUND";
+        }
+        if (e instanceof IOException) {
+            String msg = e.getMessage() == null ? "" : e.getMessage().toLowerCase();
+            if (msg.contains("does not exist")) return "SOURCE_PATH_NOT_FOUND";
+            if (msg.contains("not a file")) return "SOURCE_NOT_A_FILE";
+            if (msg.contains("name mismatch")) return "SOURCE_TARGET_MISMATCH";
+            if (msg.contains("does not contain target entry")) return "JAR_ENTRY_MISSING";
+            return "IO_OR_SOURCE_VALIDATION";
+        }
+        return "UNEXPECTED_EXCEPTION";
     }
 
     private byte[] readClassFromJar(String jarPath, String className) throws IOException {

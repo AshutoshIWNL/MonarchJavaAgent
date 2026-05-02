@@ -17,6 +17,7 @@ import java.io.File;
  */
 public class AgentAttachCLI {
     public static void main(String[] args) {
+        int exitCode = 0;
         Options options = new Options();
         options.addOption("agentJar", true, "Path to the agent JAR file");
         options.addOption("configFile", true, "Path to the agent config file");
@@ -36,8 +37,13 @@ public class AgentAttachCLI {
             System.err.println("Error parsing command-line arguments: " + e.getMessage());
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp("java -jar AgentAttacherCLI.jar", options);
+            exitCode = 1;
         } catch (Exception e) {
-            System.err.println("Error while attaching agent to the target JVM" + e.getMessage());
+            System.err.println("Error while attaching agent to the target JVM: " + e.getMessage());
+            exitCode = 1;
+        }
+        if (exitCode != 0) {
+            System.exit(exitCode);
         }
     }
 

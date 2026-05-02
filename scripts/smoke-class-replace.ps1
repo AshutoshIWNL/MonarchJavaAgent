@@ -147,11 +147,11 @@ try {
     Assert-True (Test-Path $traceFile) "Trace file not found: $traceFile"
 
     $traceText = Get-Content -Path $traceFile -Raw
-    Assert-True ($traceText.Contains("Class replacement requested for com.monarchit.target.TargetApp using FILE source")) "Missing FILE replacement request log"
-    Assert-True ($traceText.Contains("Class replacement succeeded for com.monarchit.target.TargetApp")) "Missing class replacement success log"
-    Assert-True ($traceText.Contains("Class replacement requested for com.monarchit.target.TargetApp using JAR source")) "Missing JAR replacement request log"
+    Assert-True ($traceText.Contains("Class replacement requested: ruleClassPattern=com.monarchit.target.TargetApp, targetClass=com.monarchit.target.TargetApp, sourceType=FILE")) "Missing FILE replacement request log"
+    Assert-True ($traceText.Contains("Class replacement succeeded: ruleClassPattern=com.monarchit.target.TargetApp, targetClass=com.monarchit.target.TargetApp, sourceType=FILE")) "Missing class replacement success log"
+    Assert-True ($traceText.Contains("Class replacement requested: ruleClassPattern=com.monarchit.target.*, targetClass=com.monarchit.target.TargetApp, sourceType=JAR")) "Missing JAR replacement request log"
     Assert-True ($traceText.Contains("Class replacement skipped; no loaded class matched pattern com.monarchit.target.MissingClass")) "Missing class-not-loaded warning log"
-    Assert-True ($traceText.Contains("Class replacement failed for com.monarchit.target.TargetApp from $(Escape-YamlPath $invalidClass)")) "Missing incompatible replacement failure log"
+    Assert-True ($traceText.Contains("Class replacement failed: ruleClassPattern=com.monarchit.target.TargetApp, targetClass=com.monarchit.target.TargetApp, sourceType=FILE, sourcePath=$(Escape-YamlPath $invalidClass); category=SOURCE_TARGET_MISMATCH")) "Missing incompatible replacement failure diagnostics"
 
     $backupFile = Join-Path $traceDir.FullName "backup\com_monarchit_target_TargetApp.class"
     Assert-True (Test-Path $backupFile) "Expected backup class was not created: $backupFile"
