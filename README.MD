@@ -296,7 +296,17 @@ Common Prometheus queries:
 
 Example Grafana dashboard using Monarch metrics:
 
-![Grafana dashboard for MonarchJavaAgent metrics](docs/grafana-dashboard.png.jpg)
+![Grafana dashboard for MonarchJavaAgent metrics](jekyll/source/grafana-dashboard.png.jpg)
+
+## Documentation
+
+- Jekyll source for the project site lives under `jekyll/source`.
+- GitHub Pages is built and deployed from workflow automation (not from committed `docs/` output).
+
+## Releasing
+
+- Release process runbook: [RELEASING.md](RELEASING.md)
+- Release workflow is tag-driven and validates tag version against `pom.xml`.
 
 ## Building from Source
 
