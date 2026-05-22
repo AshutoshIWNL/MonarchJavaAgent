@@ -24,8 +24,12 @@ on:
 
 jobs:
   build:
-    name: Maven Build
+    name: Maven Build (JDK ${{ matrix.java }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ["11", "17", "21", "25"]
 
     steps:
       - name: Checkout
@@ -35,8 +39,8 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: ${{ matrix.java }}
           cache: maven
 
-      - name: Build
-        run: mvn -B -q -DskipTests clean package
+      - name: Build and Test
+        run: mvn -B -q clean verify
