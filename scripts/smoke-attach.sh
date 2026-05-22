@@ -115,6 +115,7 @@ cleanup() {
 trap cleanup EXIT
 
 wait_until 20 1 "Target app did not stay alive long enough before attach." "kill -0 $target_pid >/dev/null 2>&1"
+sleep 3
 pre_trace_count="$(find "$trace_root" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
 if [[ "$pre_trace_count" -ne 0 ]]; then
   echo "Trace output already exists before attach" >&2

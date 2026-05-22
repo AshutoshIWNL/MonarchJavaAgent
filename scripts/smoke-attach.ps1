@@ -132,6 +132,7 @@ try {
     Wait-Until -TimeoutSeconds 20 -PollIntervalMs 250 -TimeoutMessage "Target app did not stay alive long enough before attach." -Condition {
         return (-not $proc.HasExited)
     }
+    Start-Sleep -Seconds 3
     $preAttachTraceDirs = Get-ChildItem -Path $traceRoot -Directory -ErrorAction SilentlyContinue
     Assert-True (($null -eq $preAttachTraceDirs) -or ($preAttachTraceDirs.Count -eq 0)) "Trace output already exists before attach"
 
@@ -167,8 +168,8 @@ Write-Host "[smoke-attach] Attaching agent to PID $($proc.Id)..."
     if ($LASTEXITCODE -ne 0) { throw "Attach CLI failed with exit code $LASTEXITCODE" }
 
     Wait-Until -TimeoutSeconds 40 -PollIntervalMs 500 -TimeoutMessage "No trace directory created under $traceRoot after attach." -Condition {
-        $dirs = Get-ChildItem -Path $traceRoot -Directory -ErrorAction SilentlyContinue
-        return $null -ne $dirs -and $dirs.Count -gt 0
+        $dirs = @(Get-ChildItem -Path $traceRoot -Directory -ErrorAction SilentlyContinue)
+        return $dirs.Count -gt 0
     }
     $traceDir = Get-ChildItem -Path $traceRoot -Directory | Sort-Object LastWriteTime -Descending | Select-Object -First 1
     Assert-True ($null -ne $traceDir) "No trace directory created under $traceRoot after attach"
