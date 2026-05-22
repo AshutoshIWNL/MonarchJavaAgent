@@ -1,6 +1,6 @@
 # MonarchJavaAgent
 
-![Monarch Logo](jekyll/source/monarch-logo.png)
+![Monarch Logo](jekyll/source/monarch-logo-v2.png)
 
 MonarchJavaAgent is a hybrid Java agent for production diagnostics and JVM observation. It lets you attach targeted bytecode instrumentation to a live JVM, expose Prometheus-compatible JVM metrics, and use runtime configuration to move between instrumenter, observer, and hybrid workflows without changing the application code.
 
