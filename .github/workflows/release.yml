@@ -18,6 +18,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate Tag Matches pom.xml Version
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          POM_VERSION="$(mvn -q -DforceStdout help:evaluate -Dexpression=project.version | tail -n 1 | tr -d '\r')"
+
+          if [[ "${TAG}" =~ ^v(.+)$ ]]; then
+            TAG_VERSION="${BASH_REMATCH[1]}"
+          elif [[ "${TAG}" =~ ^(.+)\.RELEASE$ ]]; then
+            TAG_VERSION="${BASH_REMATCH[1]}"
+          else
+            echo "Unsupported release tag format: ${TAG}"
+            echo "Supported formats: v<version>, <version>.RELEASE"
+            exit 1
+          fi
+
+          if [[ "${TAG_VERSION}" != "${POM_VERSION}" ]]; then
+            echo "Tag/version mismatch:"
+            echo "  tag => ${TAG} (parsed: ${TAG_VERSION})"
+            echo "  pom => ${POM_VERSION}"
+            exit 1
+          fi
+
+          echo "Tag/version match confirmed: ${TAG_VERSION}"
+
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
