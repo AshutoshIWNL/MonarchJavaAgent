@@ -14,6 +14,7 @@ This is useful when you need to:
 - **Stack Trace Printing**: Print the stack trace when a certain method is invoked. Supports conditional printing only if a specific class/method appears in the current stack trace.
 - **Return Value Logging**: Log the return value of a method.
 - **Custom code addition**: Add custom code to a method.
+- **Trace macro for custom code**: Use `MLOG(...)` inside `ADD` rules to route diagnostic output into Monarch trace logs instead of app stdout/app logger.
 - **Class replacement**: Replace already loaded classes using external bytecode from `.class` files or `.jar` entries via JVM redefine.
 - **Heap Dump Capture**: Take a heap dump when a method is invoked or exits.
 - **Method Execution Time**: Print the time taken for a method's execution (Bit buggy currently and needs bytecode verification to be turned off).
@@ -222,6 +223,19 @@ Where:
     - ARGS: Log method arguments.
     - RET: Log method return value.
     - ADD: Add custom code.
+
+Optional `ADD` trace macro:
+
+- `MLOG(<expr>)`: Writes `String.valueOf(<expr>)` to Monarch trace file via `TraceFileLogger`.
+- `MLOG(...)` is optional and backward-compatible; existing `ADD` payloads still work.
+
+Examples:
+
+```plaintext
+ClassA::methodA@INGRESS::ADD::[System.out.println("legacy add path");]
+ClassA::methodA@INGRESS::ADD::[MLOG("Money: " + objA.getMoney());]
+ClassA::methodA@INGRESS::ADD::[if (objA != null) { MLOG("objA=" + objA); }]
+```
 
 Class replacement rule syntax:
 
