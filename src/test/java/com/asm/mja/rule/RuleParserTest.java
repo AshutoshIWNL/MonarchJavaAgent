@@ -47,4 +47,17 @@ class RuleParserTest {
                 "com.asm.test.ClassA@CHANGE::FILE::/root/files/ClassA.class"
         )));
     }
+
+    @Test
+    void parseWithDiagnosticsCollectsRejectedRules() {
+        RuleValidationReport report = RuleParser.parseRulesWithDiagnostics(Arrays.asList(
+                "com.asm.test.ClassA@CHANGE::FILE::[/root/files/ClassA.class]",
+                "bad-rule",
+                "com.asm.mja.Internal::method@INGRESS::ARGS"
+        ));
+
+        assertEquals(1, report.getAcceptedRules().size());
+        assertEquals(1, report.getRejectedIssues().size());
+        assertEquals(1, report.getSkippedRules());
+    }
 }

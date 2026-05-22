@@ -93,6 +93,14 @@ Enter PID of the target JVM (press Enter to use current JVM): 24300
 Agent attached successfully to PID 24300
 ```
 
+Preflight validation mode (no startup side effects):
+
+```bash
+java -javaagent:/path/to/MonarchJavaAgent.jar=configFile=/path/to/config.yaml,preflight=true,agentLogFileDir=/path/to/log/dir,agentLogLevel=INFO,agentJarPath=/path/to/MonarchJavaAgent.jar YourMainClass
+```
+
+When `preflight=true` (or `validateOnly=true`) is provided, Monarch validates config and rules, prints a validation summary, and exits without starting instrumentation/observer components.
+
 ## Configuration
 
 MonarchJavaAgent now supports a nested, mode-aware YAML structure. Supported modes are:
@@ -228,6 +236,12 @@ Where:
 - `CHANGE` rules apply only to classes that are already loaded.
 - `FILE` uses raw bytes from the class file.
 - `JAR` resolves `<ClassPattern>` matches to class entries inside the jar.
+
+Rule validation diagnostics:
+
+- Startup now emits a rule validation summary with accepted/rejected/skipped counts.
+- Rejected rules include reason + suggestion.
+- `CHANGE::FILE` / `CHANGE::JAR` rules are prevalidated for path existence/readability and source-type expectations.
 
 ## Metrics Endpoint
 

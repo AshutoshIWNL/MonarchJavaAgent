@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -101,5 +102,24 @@ public class ConfigValidatorTest {
 
         alerts.setMaxHeapDumps(-1);
         assertFalse(ConfigValidator.isValid(config));
+    }
+
+    @Test
+    void instrumenterModeRejectsInvalidReplacementRulePath() throws Exception {
+        Config config = new Config();
+        config.setMode(AgentMode.INSTRUMENTER);
+
+        InstrumentationConfig instrumentation = new InstrumentationConfig();
+        instrumentation.setEnabled(true);
+        Path traceDir = Files.createTempDirectory("mja-trace");
+        instrumentation.setTraceFileLocation(traceDir.toString());
+        instrumentation.setAgentRules(new HashSet<String>(Arrays.asList(
+                "com.example.Foo@CHANGE::FILE::[/does/not/exist/Foo.class]"
+        )));
+        config.setInstrumentation(instrumentation);
+
+        ConfigValidationResult result = ConfigValidator.validate(config);
+        assertFalse(result.isValid());
+        assertEquals(1, result.getRuleValidationReport().getRejectedIssues().size());
     }
 }

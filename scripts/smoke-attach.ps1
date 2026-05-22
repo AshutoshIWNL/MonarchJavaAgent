@@ -146,6 +146,19 @@ Write-Host "[smoke-attach] Attaching agent to PID $($proc.Id)..."
         $attachCp = "$agentJarLocal;$toolsJar"
     }
 
+    Write-Host "[smoke-attach] Preflight attach to PID $($proc.Id)..."
+    & $javaBin -cp $attachCp com.asm.mja.attach.AgentAttachCLI `
+        -agentJar $agentJarLocal `
+        -configFile $configFile `
+        -args "preflight=true,agentLogFileDir=$agentLogDir,agentLogLevel=INFO" `
+        -pid $proc.Id | Out-Host
+    if ($LASTEXITCODE -ne 0) { throw "Preflight attach CLI failed with exit code $LASTEXITCODE" }
+
+    Start-Sleep -Seconds 2
+    $postPreflightTraceDirs = Get-ChildItem -Path $traceRoot -Directory -ErrorAction SilentlyContinue
+    Assert-True (($null -eq $postPreflightTraceDirs) -or ($postPreflightTraceDirs.Count -eq 0)) "Trace output exists after preflight attach; expected no instrumentation side effects"
+
+    Write-Host "[smoke-attach] Full attach to PID $($proc.Id)..."
     & $javaBin -cp $attachCp com.asm.mja.attach.AgentAttachCLI `
         -agentJar $agentJarLocal `
         -configFile $configFile `

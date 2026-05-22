@@ -2,6 +2,7 @@ package com.asm.mja.bootstrap;
 
 import com.asm.mja.config.Config;
 import com.asm.mja.config.ConfigParser;
+import com.asm.mja.config.ConfigValidationResult;
 import com.asm.mja.config.ConfigValidator;
 import com.asm.mja.logging.AgentLogger;
 
@@ -20,11 +21,12 @@ public class ConfigBootstrap {
     public static ConfigContext load(String agentArgs) {
         String configFile = fetchConfigFile(agentArgs);
         Config config = ConfigParser.parse(configFile);
-        return new ConfigContext(configFile, config);
+        ConfigValidationResult validationResult = ConfigValidator.validate(config);
+        return new ConfigContext(configFile, config, validationResult);
     }
 
-    public static boolean isValid(Config config) {
-        return ConfigValidator.isValid(config);
+    public static boolean isValid(ConfigValidationResult validationResult) {
+        return validationResult != null && validationResult.isValid();
     }
 
     static String fetchConfigFile(String agentArgs) {

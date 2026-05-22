@@ -133,6 +133,21 @@ if [[ -f "$JAVA_HOME/lib/tools.jar" ]]; then
   attach_cp="$agent_jar_local:$JAVA_HOME/lib/tools.jar"
 fi
 
+echo "[smoke-attach] Preflight attach to PID $target_pid..."
+"$java_bin" -cp "$attach_cp" com.asm.mja.attach.AgentAttachCLI \
+  -agentJar "$agent_jar_local" \
+  -configFile "$config_file" \
+  -args "preflight=true,agentLogFileDir=$agent_log_dir,agentLogLevel=INFO" \
+  -pid "$target_pid"
+
+sleep 2
+post_preflight_trace_count="$(find "$trace_root" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
+if [[ "$post_preflight_trace_count" -ne 0 ]]; then
+  echo "Trace output exists after preflight attach; expected no instrumentation side effects" >&2
+  exit 1
+fi
+
+echo "[smoke-attach] Full attach to PID $target_pid..."
 "$java_bin" -cp "$attach_cp" com.asm.mja.attach.AgentAttachCLI \
   -agentJar "$agent_jar_local" \
   -configFile "$config_file" \

@@ -1,7 +1,7 @@
 package com.asm.mja.bootstrap;
 
 import com.asm.mja.config.Config;
-import com.asm.mja.config.ConfigParser;
+import com.asm.mja.config.ConfigValidationResult;
 import com.asm.mja.logging.AgentLogger;
 import com.asm.mja.logging.TraceFileLogger;
 import com.asm.mja.rule.Rule;
@@ -40,12 +40,19 @@ public class AgentStartupOrchestrator {
 
             String configFile;
             Config config;
+            ConfigValidationResult validationResult;
             ConfigContext configContext = ConfigBootstrap.load(agentArgs);
             configFile = configContext.getConfigFile();
             config = configContext.getConfig();
+            validationResult = configContext.getValidationResult();
 
-            if (!ConfigBootstrap.isValid(config)) {
+            if (!ConfigBootstrap.isValid(validationResult)) {
                 AgentLogger.error("Config file isn't valid, exiting...");
+                return;
+            }
+
+            if (isPreflightValidationMode(agentArgs)) {
+                AgentLogger.info("Preflight validation succeeded. Exiting without starting instrumentation/observer components.");
                 return;
             }
 
@@ -147,5 +154,20 @@ public class AgentStartupOrchestrator {
         AgentLogger.draw(BannerUtils.getBanner(AGENT_NAME + " JAVA AGENT"));
         AgentLogger.info("Starting " + AGENT_NAME + " " + VERSION + " @ " + DateUtils.getFormattedTimestamp());
         AgentLogger.info("Agent arguments - " + agentArgs);
+    }
+
+    private static boolean isPreflightValidationMode(String agentArgs) {
+        if (agentArgs == null || agentArgs.isEmpty()) {
+            return false;
+        }
+        String[] args = agentArgs.split(",");
+        for (String arg : args) {
+            String trimmed = arg == null ? "" : arg.trim();
+            if (trimmed.equalsIgnoreCase("preflight=true")
+                    || trimmed.equalsIgnoreCase("validateOnly=true")) {
+                return true;
+            }
+        }
+        return false;
     }
 }
