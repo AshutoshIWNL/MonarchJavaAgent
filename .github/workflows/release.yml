@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*.RELEASE"
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build And Publish Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Build
+        run: mvn -B -q clean verify
+
+      - name: Prepare Release Artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          JAR="$(ls target/*-shaded.jar | head -n 1)"
+          if [ -z "${JAR}" ]; then
+            echo "No shaded jar found under target/"
+            exit 1
+          fi
+          SHA_FILE="$(basename "${JAR}").sha256"
+          sha256sum "${JAR}" > "target/${SHA_FILE}"
+          echo "RELEASE_JAR=${JAR}" >> "$GITHUB_ENV"
+          echo "RELEASE_SHA=target/${SHA_FILE}" >> "$GITHUB_ENV"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            "${{ env.RELEASE_JAR }}" \
+            "${{ env.RELEASE_SHA }}" \
+            --title "${{ github.ref_name }}" \
+            --generate-notes
