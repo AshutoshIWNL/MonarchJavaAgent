@@ -236,7 +236,7 @@ bash scripts/smoke-all.sh
 
 ## The Architect of Shadows
 
-* **Ashutosh Mishra** (https://github.com/AshutoshIWNL)
+* **Ashutosh Mishra** ([GitHub](https://github.com/AshutoshIWNL))
 
 ## The Shadow's Pact
 
