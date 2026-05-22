@@ -32,9 +32,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          JAR="$(ls target/*-shaded.jar | head -n 1)"
+          JAR="$(ls target/*-all.jar | head -n 1)"
           if [ -z "${JAR}" ]; then
-            echo "No shaded jar found under target/"
+            echo "No shaded (-all) jar found under target/"
             exit 1
           fi
           SHA_FILE="$(basename "${JAR}").sha256"
