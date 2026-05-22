@@ -1,10 +1,8 @@
 ---
-layout: null
+layout: default
+title: Monarch Java Agent
 ---
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/AshutoshIWNL/MonarchJavaAgent)
-<link rel="icon" type="image/x-icon" href="favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-<link rel="stylesheet" type="text/css" href="style.css">
 
 # Monarch Java Agent
 
