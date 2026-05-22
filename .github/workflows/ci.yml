@@ -3,6 +3,7 @@ name: Build
 on:
   push:
     paths-ignore:
+      - ".github/workflows/**"
       - "docs/**"
       - "jekyll/**"
       - "**/*.md"
@@ -13,6 +14,7 @@ on:
       - ".m2/**"
   pull_request:
     paths-ignore:
+      - ".github/workflows/**"
       - "docs/**"
       - "jekyll/**"
       - "**/*.md"
