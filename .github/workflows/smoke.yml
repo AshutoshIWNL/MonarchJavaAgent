@@ -1,0 +1,35 @@
+name: Smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 3 * * *"
+
+jobs:
+  smoke:
+    name: Smoke Tests (Ubuntu, JDK 17)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Run Smoke Suite
+        run: |
+          chmod +x scripts/*.sh
+          bash scripts/smoke-all.sh
+
+      - name: Upload Smoke Artifacts (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-artifacts
+          path: /tmp/mja-smoke
+          if-no-files-found: ignore
