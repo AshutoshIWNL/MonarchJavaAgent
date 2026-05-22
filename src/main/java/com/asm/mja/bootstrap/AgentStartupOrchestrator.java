@@ -163,8 +163,7 @@ public class AgentStartupOrchestrator {
         String[] args = agentArgs.split(",");
         for (String arg : args) {
             String trimmed = arg == null ? "" : arg.trim();
-            if (trimmed.equalsIgnoreCase("preflight=true")
-                    || trimmed.equalsIgnoreCase("validateOnly=true")) {
+            if (trimmed.equalsIgnoreCase("preflight=true")) {
                 return true;
             }
         }
