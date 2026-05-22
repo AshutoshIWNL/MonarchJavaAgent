@@ -7,6 +7,8 @@ layout: null
 
 # Monarch Java Agent
 
+![Monarch Logo](monarch-logo.png)
+
 Monarch is a hybrid Java agent for production diagnostics and JVM observation. It lets you attach targeted bytecode instrumentation to a live JVM, expose Prometheus-compatible JVM metrics, and move between instrumenter, observer, and hybrid workflows without changing the application code.
 
 Operational safety: Monarch contains agent-side failures at startup and runtime boundaries so instrumentation errors degrade behavior instead of crashing application flow.
