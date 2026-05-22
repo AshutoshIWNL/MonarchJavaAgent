@@ -183,6 +183,14 @@ img {
     border: 1px solid rgba(126, 98, 255, 0.36);
 }
 
+img[alt="Monarch Logo"] {
+    display: block;
+    width: min(360px, 68%);
+    margin: 8px auto 20px;
+    border: 0;
+    border-radius: 0;
+}
+
 hr {
     border: 0;
     border-top: 1px solid rgba(164, 139, 255, 0.28);
