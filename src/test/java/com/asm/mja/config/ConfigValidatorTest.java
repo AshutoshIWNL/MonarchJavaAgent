@@ -105,7 +105,7 @@ public class ConfigValidatorTest {
     }
 
     @Test
-    void instrumenterModeRejectsInvalidReplacementRulePath() throws Exception {
+    void instrumenterModeReportsInvalidReplacementRulePathButStaysValid() throws Exception {
         Config config = new Config();
         config.setMode(AgentMode.INSTRUMENTER);
 
@@ -119,7 +119,7 @@ public class ConfigValidatorTest {
         config.setInstrumentation(instrumentation);
 
         ConfigValidationResult result = ConfigValidator.validate(config);
-        assertFalse(result.isValid());
+        assertTrue(result.isValid());
         assertEquals(1, result.getRuleValidationReport().getRejectedIssues().size());
     }
 }

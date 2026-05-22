@@ -83,11 +83,6 @@ public class ConfigValidator {
             return false;
         }
 
-        if (!ruleValidationReport.getRejectedIssues().isEmpty()) {
-            AgentLogger.error("One or more rules failed validation. Fix rejected rules and restart.");
-            return false;
-        }
-
         return true;
     }
 
@@ -231,6 +226,9 @@ public class ConfigValidator {
         AgentLogger.info("Rule validation summary: accepted=" + report.getAcceptedRules().size()
                 + ", rejected=" + report.getRejectedIssues().size()
                 + ", skipped=" + report.getSkippedRules());
+        if (!report.getRejectedIssues().isEmpty()) {
+            AgentLogger.warning("Some rules were rejected during validation. Agent will continue with accepted rules.");
+        }
         for (RuleValidationIssue issue : report.getRejectedIssues()) {
             AgentLogger.error("Rejected rule: " + issue.getRule() + "; reason=" + issue.getReason()
                     + "; suggestion=" + issue.getSuggestion());

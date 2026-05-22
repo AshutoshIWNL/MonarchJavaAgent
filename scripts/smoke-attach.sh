@@ -78,7 +78,8 @@ instrumentation:
     - com.monarchit.target.TargetApp::hotMethod@INGRESS::STACK
     - com.monarchit.target.TargetApp::filteredStackMethod@INGRESS::STACK::[com.monarchit.target.TargetApp.main]
     - com.monarchit.target.TargetApp::profileWork@PROFILE
-    - com.monarchit.target.TargetApp::hotMethod@INGRESS::ADD::[com.asm.mja.logging.TraceFileLogger.getInstance().trace("ADD_MARKER");]
+    - com.monarchit.target.TargetApp::hotMethod@INGRESS::ADD::[System.out.println("ADD_STDOUT_MARKER");]
+    - com.monarchit.target.TargetApp::hotMethod@INGRESS::ADD::[MLOG("MLOG_MARKER");]
     - com.monarchit.target.TargetApp::lineProbe@CODEPOINT($codepoint_line)::ADD::[com.asm.mja.logging.TraceFileLogger.getInstance().trace("CODEPOINT_MARKER");]
     - com.monarchit.target.TargetApp::memoryBurst@INGRESS::HEAP
 observer:
@@ -174,7 +175,7 @@ wait_until 90 1 "Trace markers did not appear in time: ARGS/RET/STACK/PROFILE/AD
    grep -q 'STACK' <<<\"\$trace_text\" && \
    grep -q '{com.monarchit.target.TargetApp.filteredStackMethod} | INGRESS | STACK' <<<\"\$trace_text\" && \
    grep -q 'PROFILE | Execution time' <<<\"\$trace_text\" && \
-   grep -q 'ADD_MARKER' <<<\"\$trace_text\" && \
+   grep -q 'MLOG_MARKER' <<<\"\$trace_text\" && \
    grep -q 'CODEPOINT_MARKER' <<<\"\$trace_text\" && \
    grep -q 'HEAP' <<<\"\$trace_text\" && \
    grep -q 'Current JVM CPU Load' <<<\"\$trace_text\" && \
@@ -184,6 +185,8 @@ wait_until 90 1 "Trace markers did not appear in time: ARGS/RET/STACK/PROFILE/AD
    grep -q '{USED:' <<<\"\$trace_text\""
 
 trace_text="$(cat "$trace_file")"
+
+wait_until 60 1 "ADD stdout marker did not appear in target stdout." "grep -q 'ADD_STDOUT_MARKER' \"$target_stdout\""
 
 wait_until 60 1 "No heap dump file generated after attach." "[[ \$(find \"$trace_dir\" -maxdepth 1 -type f -name '*.hprof' | wc -l | tr -d ' ') -ge 1 ]]"
 

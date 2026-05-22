@@ -94,7 +94,8 @@ instrumentation:
     - com.monarchit.target.TargetApp::hotMethod@INGRESS::STACK
     - com.monarchit.target.TargetApp::filteredStackMethod@INGRESS::STACK::[com.monarchit.target.TargetApp.main]
     - com.monarchit.target.TargetApp::profileWork@PROFILE
-    - com.monarchit.target.TargetApp::hotMethod@INGRESS::ADD::[com.asm.mja.logging.TraceFileLogger.getInstance().trace("ADD_MARKER");]
+    - com.monarchit.target.TargetApp::hotMethod@INGRESS::ADD::[System.out.println("ADD_STDOUT_MARKER");]
+    - com.monarchit.target.TargetApp::hotMethod@INGRESS::ADD::[MLOG("MLOG_MARKER");]
     - com.monarchit.target.TargetApp::lineProbe@CODEPOINT($codepointLine)::ADD::[com.asm.mja.logging.TraceFileLogger.getInstance().trace("CODEPOINT_MARKER");]
     - com.monarchit.target.TargetApp::memoryBurst@INGRESS::HEAP
 observer:
@@ -187,7 +188,7 @@ Write-Host "[smoke-attach] Attaching agent to PID $($proc.Id)..."
             -and $traceText.Contains("STACK") `
             -and $traceText.Contains("{com.monarchit.target.TargetApp.filteredStackMethod} | INGRESS | STACK") `
             -and $traceText.Contains("PROFILE | Execution time") `
-            -and $traceText.Contains("ADD_MARKER") `
+            -and $traceText.Contains("MLOG_MARKER") `
             -and $traceText.Contains("CODEPOINT_MARKER") `
             -and $traceText.Contains("HEAP") `
             -and $traceText.Contains("Current JVM CPU Load") `
@@ -197,6 +198,12 @@ Write-Host "[smoke-attach] Attaching agent to PID $($proc.Id)..."
             -and $traceText.Contains("{USED:")
     }
     $traceText = Get-Content -Path $traceFile -Raw
+
+    Wait-Until -TimeoutSeconds 60 -PollIntervalMs 500 -TimeoutMessage "ADD stdout marker did not appear in target stdout." -Condition {
+        if (-not (Test-Path $targetStdOut)) { return $false }
+        $stdoutText = Get-Content -Path $targetStdOut -Raw
+        return $stdoutText.Contains("ADD_STDOUT_MARKER")
+    }
 
     Wait-Until -TimeoutSeconds 60 -PollIntervalMs 1000 -TimeoutMessage "No heap dump file generated after attach." -Condition {
         $heapDumps = @(Get-ChildItem -Path $traceDir.FullName -Filter "*.hprof" -File -ErrorAction SilentlyContinue)
