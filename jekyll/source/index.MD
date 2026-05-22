@@ -28,6 +28,7 @@ Use Monarch when you need to:
 * **Argument logging:** Capture and log method arguments.
 * **Return value logging:** Capture and log method return values.
 * **Custom code insertion:** Inject custom diagnostic code into target methods.
+* **Trace macro for custom code:** Use `MLOG(...)` inside `ADD` rules to route diagnostic output into Monarch trace logs.
 * **Class replacement:** Replace already-loaded classes from external `.class` files or `.jar` entries.
 * **Method profiling:** Measure method execution time.
 * **Heap dump capture:** Trigger heap dumps on method ingress/egress conditions.
@@ -64,6 +65,14 @@ java -Xverify:none -javaagent:/path/to/MonarchJavaAgent.jar=configFile=/path/to/
 1. Start your application normally.
 2. Run `monarchAgentStart.bat` or `monarchAgentStart.sh`.
 3. Provide the agent jar, config file, bootstrap arguments, and target PID.
+
+Preflight validation mode (no startup side effects):
+
+```bash
+java -javaagent:/path/to/MonarchJavaAgent.jar=configFile=/path/to/config.yaml,preflight=true,agentLogFileDir=/path/to/log/dir,agentLogLevel=INFO,agentJarPath=/path/to/MonarchJavaAgent.jar YourMainClass
+```
+
+When `preflight=true` is provided, Monarch validates config and rules, prints a validation summary, and exits without starting instrumentation/observer components.
 
 ## Commanding the Shadows
 
@@ -143,6 +152,19 @@ Where:
 * `<EVENT>` is one of `INGRESS`, `EGRESS`, `CODEPOINT`, `PROFILE`
 * `<ACTION>` is one of `STACK`, `HEAP`, `ARGS`, `RET`, `ADD`
 
+Optional `ADD` trace macro:
+
+* `MLOG(<expr>)` writes `String.valueOf(<expr>)` to Monarch trace file via `TraceFileLogger`.
+* `MLOG(...)` is optional and backward-compatible; existing `ADD` payloads still work.
+
+Examples:
+
+```plaintext
+ClassA::methodA@INGRESS::ADD::[System.out.println("legacy add path");]
+ClassA::methodA@INGRESS::ADD::[MLOG("Money: " + objA.getMoney());]
+ClassA::methodA@INGRESS::ADD::[if (objA != null) { MLOG("objA=" + objA); }]
+```
+
 Class replacement rule syntax:
 
 ```plaintext
@@ -156,6 +178,12 @@ Where:
 * `CHANGE` applies only to classes that are already loaded
 * `FILE` reads replacement bytecode from a single class file
 * `JAR` reads replacement bytecode from matching class entries inside the jar
+
+Rule validation diagnostics:
+
+* Startup emits a rule validation summary with accepted/rejected/skipped counts.
+* Rejected rules include reason and suggestion.
+* `CHANGE::FILE` / `CHANGE::JAR` rules are prevalidated for path existence/readability and source-type expectations.
 
 ## Shadow Metrics Gate
 

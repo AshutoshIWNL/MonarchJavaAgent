@@ -100,7 +100,7 @@ Preflight validation mode (no startup side effects):
 java -javaagent:/path/to/MonarchJavaAgent.jar=configFile=/path/to/config.yaml,preflight=true,agentLogFileDir=/path/to/log/dir,agentLogLevel=INFO,agentJarPath=/path/to/MonarchJavaAgent.jar YourMainClass
 ```
 
-When `preflight=true` (or `validateOnly=true`) is provided, Monarch validates config and rules, prints a validation summary, and exits without starting instrumentation/observer components.
+When `preflight=true` is provided, Monarch validates config and rules, prints a validation summary, and exits without starting instrumentation/observer components.
 
 ## Configuration
 
