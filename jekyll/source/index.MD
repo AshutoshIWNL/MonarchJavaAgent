@@ -1,6 +1,5 @@
 ---
-title: Monarch Java Agent
-theme: null
+layout: null
 ---
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/AshutoshIWNL/MonarchJavaAgent)
 <link rel="icon" type="image/x-icon" href="favicon.ico">
