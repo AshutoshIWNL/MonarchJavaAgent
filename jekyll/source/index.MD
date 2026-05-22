@@ -25,16 +25,16 @@ Use Monarch when you need to:
 
 ## Key Abilities
 
-* **Shadow Trace Revelation:** Unveil the stack trace upon a method's invocation.
-* **Shadow Argument Whispers:** Capture and log the arguments passed to a method.
-* **Shadow Return Echoes:** Record the return values of methods.
-* **Shadow Code Infusion:** Inject your own diagnostic commands into the flow of execution.
-* **Shadow Form Rewrite:** Replace already-loaded classes from external `.class` files or `.jar` entries using JVM redefine.
-* **Shadow Time Capture:** Measure method execution time.
-* **Shadow Memory Grasp:** Seize a heap dump at critical moments.
-* **Shadow Resource Monitoring:** Track heap, CPU, GC, thread, and classloader behavior.
-* **Shadow Metrics Divination:** Expose Prometheus-compatible JVM metrics at `/metrics`.
-* **Shadow Alert Sentinels:** Deploy alert emails for critical resource usage.
+* **Stack trace printing:** Print a stack trace when a target method is invoked.
+* **Argument logging:** Capture and log method arguments.
+* **Return value logging:** Capture and log method return values.
+* **Custom code insertion:** Inject custom diagnostic code into target methods.
+* **Class replacement:** Replace already-loaded classes from external `.class` files or `.jar` entries.
+* **Method profiling:** Measure method execution time.
+* **Heap dump capture:** Trigger heap dumps on method ingress/egress conditions.
+* **JVM monitoring:** Track heap, CPU, GC, thread, and classloader behavior.
+* **Metrics endpoint:** Expose Prometheus-compatible JVM metrics at `/metrics` (plus JSON compatibility at `/metrics.json`).
+* **Alert emails:** Send email alerts for critical resource usage and deadlock conditions.
 
 ## MonArgs
 
@@ -124,6 +124,11 @@ alerts:
 
 Legacy flat keys are still accepted, but nested config is the default and takes precedence when both forms are present.
 
+Current implementation note:
+
+* `instrumentation.traceFileLocation` is still used as the shared trace output root for both instrumentation and observer traces.
+* For `observer` mode, set `instrumentation.traceFileLocation` until trace output is moved to a shared config section.
+
 ## The Monarch's Decrees
 
 Rule syntax:
@@ -166,7 +171,7 @@ Prometheus scrape config:
 
 ```yaml
 global:
-  scrape_interval: 5s
+  scrape_interval: 10s
 
 scrape_configs:
   - job_name: "monarch-java-agent"
@@ -181,6 +186,13 @@ Common Prometheus queries:
 * `monarch_jvm_threads_current`
 * `monarch_jvm_classloader_loaded`
 
+Sampling cadence transparency:
+
+* CPU updates every 10s
+* Heap updates every 30s
+* GC/Thread/Classloader updates every 60s
+* Scraping faster than update cadence may return repeated values, which is expected.
+
 Example Grafana dashboard:
 
 ![Grafana dashboard for MonarchJavaAgent metrics](grafana-dashboard.png.jpg)
@@ -191,6 +203,12 @@ Example Grafana dashboard:
 git clone https://github.com/AshutoshIWNL/MonarchJavaAgent.git
 cd MonarchJavaAgent
 mvn clean package
+```
+
+For full build + tests:
+
+```bash
+mvn clean verify
 ```
 
 ## Shadow Trials
@@ -208,6 +226,13 @@ powershell -ExecutionPolicy Bypass -File scripts\smoke-class-replace.ps1
 powershell -ExecutionPolicy Bypass -File scripts\smoke-config-reload.ps1
 powershell -ExecutionPolicy Bypass -File scripts\smoke-invalid-rule.ps1
 powershell -ExecutionPolicy Bypass -File scripts\smoke-config-precedence.ps1
+```
+
+Linux/macOS:
+
+```bash
+chmod +x scripts/*.sh
+bash scripts/smoke-all.sh
 ```
 
 ## The Architect of Shadows

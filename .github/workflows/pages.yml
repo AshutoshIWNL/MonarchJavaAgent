@@ -29,6 +29,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Lint Markdown
+        uses: DavidAnson/markdownlint-cli2-action@v20
+        with:
+          globs: |
+            jekyll/source/**/*.md
+            jekyll/source/**/*.MD
+
+      - name: Check Links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --verbose --no-progress "jekyll/source/**/*.md" "jekyll/source/**/*.MD"
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
