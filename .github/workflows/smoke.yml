@@ -3,7 +3,7 @@ name: Smoke
 on:
   workflow_dispatch:
   schedule:
-    - cron: "30 3 * * *"
+    - cron: "30 3 1,16 * *"
 
 jobs:
   smoke:
